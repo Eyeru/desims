@@ -11,7 +11,7 @@ class Course(models.Model):
 
     code = models.CharField(max_length=20)
     title = models.CharField(max_length=200)
-    academic_year = models.IntegerField()
+    year_level = models.IntegerField()
     semester = models.IntegerField()
     program_type = models.CharField(max_length=20, choices=PROGRAM_TYPES)
 

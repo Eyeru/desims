@@ -15,8 +15,12 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, include
+
+from reports.views_excel import download_excel
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('reports/', include('reports.urls')),
+    path("export/excel/", download_excel),
 ]

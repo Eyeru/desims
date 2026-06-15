@@ -44,6 +44,13 @@ INSTALLED_APPS = [
     'academics',
     'exams',
     'allocations',
+    'scheduling',
+    'invigilation',
+    'conflicts',
+    'core_engine',
+    'reports',
+    'teaching_schedule',
+    'semester_setup',
 ]
 
 MIDDLEWARE = [
