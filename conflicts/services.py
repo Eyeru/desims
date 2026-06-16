@@ -1,67 +1,99 @@
-from .models import Conflict
 from scheduling.models import ExamSchedule
+from allocations.models import ExamRoomAllocation
 from invigilation.models import InvigilationAssignment
+from django.db.models import Count
 
+def detect_room_conflicts():
+    conflicts = []
 
-def detect_staff_conflict(staff, exam_schedule):
-    """
-    Checks if staff has teaching or invigilation clash
-    """
+    schedules = ExamSchedule.objects.all()
 
-    # Check invigilation overlap
-    existing = InvigilationAssignment.objects.filter(
-        staff=staff,
-        exam__exam__exam_date=exam_schedule.date
-    )
-
-    if existing.exists():
-        return Conflict.objects.create(
-            conflict_type="STAFF_CONFLICT",
-            severity="BLOCKER",
-            staff=staff,
-            exam=exam_schedule.exam,
-            message="Staff already assigned to another invigilation duty."
+    for schedule in schedules:
+        rooms = ExamRoomAllocation.objects.filter(
+            exam_schedule=schedule
         )
 
-    return None
+        room_ids = list(rooms.values_list("room_id", flat=True))
+
+        # check duplicates in same date/session
+        overlap = ExamRoomAllocation.objects.filter(
+            exam_schedule__date=schedule.date,
+            exam_schedule__session=schedule.session,
+            room_id__in=room_ids
+        ).exclude(exam_schedule=schedule)
+
+        if overlap.exists():
+            conflicts.append({
+                "type": "ROOM_CONFLICT",
+                "schedule": str(schedule)
+            })
+
+    return conflicts
 
 
-def detect_room_conflict(room, exam_schedule):
-    existing = ExamSchedule.objects.filter(
-        date=exam_schedule.date,
-        session=exam_schedule.session,
-        exam__allocations__room=room
-    )
-
-    if existing.exists():
-        return Conflict.objects.create(
-            conflict_type="ROOM_CONFLICT",
-            severity="BLOCKER",
-            room=room,
-            exam=exam_schedule.exam,
-            message="Room already occupied in this session."
-        )
-
-    return None
-
-
-def detect_teaching_conflict(staff, exam_schedule):
-    # simplified placeholder (later we link teaching schedule app)
-    return None
-
-
-def run_all_conflicts(exam_schedule, staff_list, room_list):
+def detect_staff_overload(max_per_day=2):
+    """
+    Correct rule:
+    Each staff can only invigilate max N exams per DAY
+    """
 
     conflicts = []
 
-    for staff in staff_list:
-        c = detect_staff_conflict(staff, exam_schedule)
-        if c:
-            conflicts.append(c)
+    grouped = InvigilationAssignment.objects.values(
+        "staff_id",
+        "exam_schedule__date"
+    ).annotate(total=Count("id"))
 
-    for room in room_list:
-        c = detect_room_conflict(room, exam_schedule)
-        if c:
-            conflicts.append(c)
+    for g in grouped:
+
+        if g["total"] > max_per_day:
+            conflicts.append({
+                "type": "STAFF_OVERLOAD",
+                "staff_id": g["staff_id"],
+                "date": g["exam_schedule__date"],
+                "count": g["total"]
+            })
 
     return conflicts
+
+
+def detect_capacity_issues():
+    conflicts = []
+
+    schedule_map = {}
+
+    allocations = ExamRoomAllocation.objects.select_related("exam_schedule", "exam_schedule__exam")
+
+    for alloc in allocations:
+        schedule = alloc.exam_schedule
+
+        if schedule.id not in schedule_map:
+            schedule_map[schedule.id] = {
+                "schedule": schedule,
+                "total": 0
+            }
+
+        schedule_map[schedule.id]["total"] += alloc.allocated_students
+
+    # compare expected vs actual
+    for item in schedule_map.values():
+
+        expected = item["schedule"].exam.total_students
+        actual = item["total"]
+
+        if expected != actual:
+            conflicts.append({
+                "type": "CAPACITY_MISMATCH",
+                "schedule": str(item["schedule"]),
+                "expected": expected,
+                "actual": actual
+            })
+
+    return conflicts
+
+def run_all_conflict_checks():
+    return {
+        "room_conflicts": detect_room_conflicts(),
+        "staff_conflicts": detect_staff_overload(),
+        "capacity_issues": detect_capacity_issues(),
+    }
