@@ -1,10 +1,17 @@
 from django.db import models
-from exams.models import Exam
 from rooms.models import Room
+from scheduling.models import ExamSchedule
 
 
 class ExamRoomAllocation(models.Model):
-    exam = models.ForeignKey(Exam, on_delete=models.CASCADE)
+    exam_schedule = models.ForeignKey(
+        ExamSchedule,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="room_allocations"
+    )
+
     room = models.ForeignKey(Room, on_delete=models.CASCADE)
 
     allocated_students = models.IntegerField(default=0)
@@ -12,7 +19,7 @@ class ExamRoomAllocation(models.Model):
     is_auto = models.BooleanField(default=True)
 
     class Meta:
-        unique_together = ('exam', 'room')
+        unique_together = ('exam_schedule', 'room')
 
     def __str__(self):
-        return f"{self.exam} -> {self.room}"
+        return f"{self.exam_schedule} -> {self.room}"

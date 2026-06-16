@@ -10,4 +10,4 @@ class Exam(models.Model):
     total_students = models.IntegerField(default=0)
 
     def __str__(self):
-        return f"{self.course.code} - {self.date}"
+        return f"{self.course.code}"

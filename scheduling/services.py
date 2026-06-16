@@ -1,17 +1,22 @@
-from datetime import timedelta
+from datetime import timedelta, datetime
 
 from academics.models import Holiday, ExamSession
+from courses.models import Course
 from exams.models import Exam
+
 from .models import ExamSchedule
+
+from allocations.services import allocate_all_exams
+from invigilation.services import assign_all_invigilators
 
 
 # ----------------------------
-# HOLIDAY / DATE UTILITIES
+# DATE UTILITIES
 # ----------------------------
 
 def is_valid_day(date):
-    """Check if date is not weekend or holiday."""
-    if date.weekday() >= 5:  # Saturday/Sunday
+
+    if date.weekday() >= 5:
         return False
 
     if Holiday.objects.filter(date=date).exists():
@@ -21,7 +26,7 @@ def is_valid_day(date):
 
 
 def next_valid_date(date):
-    """Find next valid exam day (skips weekends + holidays)."""
+
     candidate = date + timedelta(days=1)
 
     while not is_valid_day(candidate):
@@ -35,14 +40,8 @@ def next_valid_date(date):
 # ----------------------------
 
 def generate_exams(plan):
-    """
-    Create exams from courses matching:
-    - year_level
-    - semester
-    - program_type
-    """
 
-    courses = plan.course_set.filter(
+    courses = Course.objects.filter(
         year_level=plan.year_level,
         semester=plan.semester,
         program_type=plan.program_type,
@@ -52,13 +51,17 @@ def generate_exams(plan):
 
     for course in courses:
 
-        exam, _ = Exam.objects.get_or_create(
+        exam, created = Exam.objects.get_or_create(
             academic_year=plan.academic_year,
             course=course,
             defaults={
                 "total_students": plan.student_count
             }
         )
+
+        if not created:
+            exam.total_students = plan.student_count
+            exam.save()
 
         exams.append(exam)
 
@@ -70,12 +73,6 @@ def generate_exams(plan):
 # ----------------------------
 
 def schedule_exams(plan, exams):
-    """
-    Assign date + session to exams using:
-    - no weekends
-    - no holidays
-    - multiple sessions per day
-    """
 
     sessions = list(
         ExamSession.objects.all().order_by("start_time")
@@ -85,8 +82,9 @@ def schedule_exams(plan, exams):
         raise Exception("No ExamSession configured")
 
     current_date = plan.start_date
+    if isinstance(current_date, str):
+        current_date = datetime.strptime(current_date, "%Y-%m-%d").date()
 
-    # ensure valid start date
     while not is_valid_day(current_date):
         current_date += timedelta(days=1)
 
@@ -108,7 +106,6 @@ def schedule_exams(plan, exams):
 
         session_index += 1
 
-        # move to next day after all sessions used
         if session_index % len(sessions) == 0:
             current_date = next_valid_date(current_date)
 
@@ -118,15 +115,22 @@ def schedule_exams(plan, exams):
 # ----------------------------
 
 def generate_full_plan(plan):
-    """
-    End-to-end exam generation pipeline:
-    1. Generate exams
-    2. Schedule them
-    3. Return schedules
-    """
+    if plan is None:
+        raise ValueError("SemesterPlan is required but None was provided")
 
     exams = generate_exams(plan)
 
     schedule_exams(plan, exams)
 
-    return ExamSchedule.objects.filter(exam__in=exams)
+    exam_schedules = ExamSchedule.objects.filter(
+        exam__in=exams
+    )
+
+    allocate_all_exams(exam_schedules)
+
+    assign_all_invigilators(exam_schedules)
+
+    plan.is_generated = True
+    plan.save()
+
+    return exam_schedules

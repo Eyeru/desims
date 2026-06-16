@@ -1,52 +1,123 @@
-from .models import InvigilationAssignment, StaffWorkload
+from django.db.models import Count
+
 from staff.models import Staff
+from rooms.models import Room
+
+from allocations.models import ExamRoomAllocation
+from .models import InvigilationAssignment
 
 
-def get_least_loaded_staff(exclude_ids):
-    staff_list = Staff.objects.filter(is_active=True).exclude(id__in=exclude_ids)
+def required_invigilators(schedule):
+    """
+    Classroom = 1 invigilator
+    Hall = 2 invigilators
+    """
 
-    workloads = StaffWorkload.objects.filter(staff__in=staff_list)
+    total = 0
 
-    workload_map = {w.staff_id: w.total_assignments for w in workloads}
+    allocations = ExamRoomAllocation.objects.filter(
+        exam_schedule=schedule
+    )
 
-    # default 0 if not found
-    def get_load(s):
-        return workload_map.get(s.id, 0)
+    for allocation in allocations:
 
-    sorted_staff = sorted(staff_list, key=get_load)
+        if allocation.room.room_type == Room.HALL:
+            total += 2
+        else:
+            total += 1
 
-    return sorted_staff
+    return total
 
 
-def assign_invigilators(exam, rooms, required_per_room=1):
+def busy_staff(date, session):
+    """
+    Staff already assigned in the same
+    date/session cannot be assigned again.
+    """
+
+    return Staff.objects.filter(
+        invigilationassignment__exam_schedule__date=date,
+        invigilationassignment__exam_schedule__session=session
+    ).distinct()
+
+
+def eligible_staff(program_type):
+    """
+    Extension exams:
+    only EXTENSION or BOTH staff.
+
+    Regular exams:
+    any active staff.
+    """
+
+    if program_type == "EXTENSION":
+
+        return Staff.objects.filter(
+            is_active=True,
+            program_type__in=[
+                Staff.EXTENSION,
+                Staff.BOTH
+            ]
+        )
+
+    return Staff.objects.filter(
+        is_active=True
+    )
+
+
+def assign_invigilators(schedule):
+
+    required = required_invigilators(schedule)
+
+    available = eligible_staff(
+        schedule.exam.course.program_type
+    )
+
+    available = available.exclude(
+        id__in=busy_staff(
+            schedule.date,
+            schedule.session
+        )
+    )
+
+    available = available.annotate(
+        assignment_count=Count(
+            "invigilationassignment"
+        )
+    ).order_by(
+        "assignment_count"
+    )
+
     assignments = []
 
-    for room in rooms:
-        assigned_staff_ids = []
+    for staff in available[:required]:
 
-        for _ in range(required_per_room):
+        assignment = InvigilationAssignment.objects.create(
+            exam_schedule=schedule,
+            staff=staff,
+            is_auto=True
+        )
 
-            staff_list = get_least_loaded_staff(assigned_staff_ids)
-
-            if not staff_list:
-                continue
-
-            staff = staff_list[0]
-
-            assignment = InvigilationAssignment.objects.create(
-                exam=exam,
-                room=room,
-                staff=staff,
-                is_auto=True
-            )
-
-            assignments.append(assignment)
-
-            assigned_staff_ids.append(staff.id)
-
-            # update workload
-            wl, _ = StaffWorkload.objects.get_or_create(staff=staff)
-            wl.total_assignments += 1
-            wl.save()
+        assignments.append(assignment)
 
     return assignments
+
+
+def assign_all_invigilators(exam_schedules):
+
+    results = []
+
+    for schedule in exam_schedules:
+
+        assignments = assign_invigilators(
+            schedule
+        )
+
+        results.append(
+            (
+                schedule,
+                assignments
+            )
+        )
+
+    return results

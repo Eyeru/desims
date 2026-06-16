@@ -2,40 +2,95 @@ from rooms.models import Room
 from .models import ExamRoomAllocation
 
 
-def allocate_rooms(exam):
-    students = exam.total_students
+def get_available_rooms(date, session):
 
-    # available rooms sorted by capacity
-    rooms = Room.objects.all().order_by('-exam_capacity')
+    occupied = ExamRoomAllocation.objects.filter(
+        exam_schedule__date=date,
+        exam_schedule__session=session
+    ).values_list("room_id", flat=True)
+
+    return Room.objects.filter(
+        is_active=True
+    ).exclude(
+        id__in=occupied
+    )
+
+
+def split_rooms(rooms):
+
+    classrooms = rooms.filter(
+        room_type=Room.CLASSROOM
+    ).order_by("-exam_capacity")
+
+    halls = rooms.filter(
+        room_type=Room.HALL
+    ).order_by("-exam_capacity")
+
+    return classrooms, halls
+
+
+def allocate_exam(schedule):
+
+    students = schedule.exam.total_students
+
+    available_rooms = get_available_rooms(
+        schedule.date,
+        schedule.session
+    )
+
+    classrooms, halls = split_rooms(available_rooms)
 
     allocations = []
 
-    remaining = students
+    # STEP 1: use classrooms first
+    for room in classrooms:
 
-    for room in rooms:
-        if remaining <= 0:
+        if students <= 0:
             break
 
-        capacity = room.exam_capacity
+        assigned = min(room.exam_capacity, students)
 
-        if capacity <= 0:
-            continue
-
-        take = min(capacity, remaining)
-
-        allocation = ExamRoomAllocation(
-            exam=exam,
-            room=room,
-            allocated_students=take,
-            is_auto=True
+        allocations.append(
+            ExamRoomAllocation.objects.create(
+                exam_schedule=schedule,
+                room=room,
+                allocated_students=assigned
+            )
         )
-        allocation.save()
 
-        allocations.append(allocation)
+        students -= assigned
 
-        remaining -= take
+    # STEP 2: halls only if needed
+    if students > 0:
 
-    if remaining > 0:
-        return False, f"Not enough capacity for {remaining} students"
+        for hall in halls:
 
-    return True, allocations
+            if students <= 0:
+                break
+
+            assigned = min(hall.exam_capacity, students)
+
+            allocations.append(
+                ExamRoomAllocation.objects.create(
+                    exam_schedule=schedule,
+                    room=hall,
+                    allocated_students=assigned
+                )
+            )
+
+            students -= assigned
+
+    return allocations
+
+
+def allocate_all_exams(exam_schedules):
+
+    results = []
+
+    for schedule in exam_schedules:
+
+        allocations = allocate_exam(schedule)
+
+        results.append((schedule, allocations))
+
+    return results
