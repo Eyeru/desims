@@ -1,0 +1,28 @@
+<h1>Exam Planning Dashboard</h1>
+
+{% if summary %}
+
+<h3>Active Plan</h3>
+
+<p>
+{{ summary.plan.academic_year }} -
+Year {{ summary.plan.year_level }} -
+Semester {{ summary.plan.semester }}
+</p>
+
+<hr>
+
+<p>Exams: {{ summary.exams }}</p>
+<p>Schedules: {{ summary.schedules }}</p>
+<p>Allocations: {{ summary.allocations }}</p>
+<p>Invigilations: {{ summary.invigilations }}</p>
+
+<hr>
+
+<a href="/schedules/">View Schedule</a>
+
+{% else %}
+
+<p>No active plan found.</p>
+
+{% endif %}

@@ -79,6 +79,9 @@ def available_staff(schedule, max_per_day=2):
 # -----------------------------
 def assign_invigilators(schedule):
 
+    if not schedule.exam.semesterplan_set.filter(is_active=True).exists():
+        return
+
     required = required_invigilators(schedule)
 
     available = available_staff(schedule)

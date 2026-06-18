@@ -2,7 +2,7 @@ from courses.models import Course
 from exams.models import Exam
 from datetime import timedelta
 from academics.models import Holiday
-
+from .models import SemesterPlan
 
 def generate_exams(plan):
 
@@ -67,3 +67,9 @@ def next_exam_day(current_date):
         candidate += timedelta(days=1)
 
     return candidate
+
+
+def set_active_plan(plan):
+    SemesterPlan.objects.update(is_active=False)
+    plan.is_active = True
+    plan.save()

@@ -31,6 +31,9 @@ def split_rooms(rooms):
 
 def allocate_exam(schedule):
 
+    if not schedule.exam.semesterplan_set.filter(is_active=True).exists():
+        return
+
     students = schedule.exam.total_students
 
     available_rooms = get_available_rooms(

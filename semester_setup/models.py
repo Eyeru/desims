@@ -12,6 +12,25 @@ class SemesterPlan(models.Model):
         (EXTENSION, "Extension"),
     ]
 
+    SESSION_POLICY_CHOICES = [
+        ("MORNING", "Morning Only"),
+        ("AFTERNOON", "Afternoon Only"),
+        ("MIXED", "Mixed"),
+    ]
+
+    session_policy = models.CharField(
+        max_length=20,
+        choices=SESSION_POLICY_CHOICES,
+        default="MIXED"
+    )
+
+    exam_session = models.ForeignKey(
+        "academics.ExamSession",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True
+    )
+
     academic_year = models.ForeignKey(
         "academics.AcademicYear",
         on_delete=models.CASCADE
@@ -35,6 +54,8 @@ class SemesterPlan(models.Model):
     is_generated = models.BooleanField(default=False)
 
     created_at = models.DateTimeField(auto_now_add=True)
+   
+    is_active = models.BooleanField(default=False)
 
     def __str__(self):
         return (

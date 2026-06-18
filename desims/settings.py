@@ -51,6 +51,7 @@ INSTALLED_APPS = [
     'reports',
     'teaching_schedule',
     'semester_setup',
+    'dashboard',
 ]
 
 MIDDLEWARE = [

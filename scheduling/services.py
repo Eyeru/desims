@@ -27,7 +27,7 @@ def is_valid_day(date):
 
 def next_valid_date(date):
 
-    candidate = date + timedelta(days=1)
+    candidate = date + timedelta(days=2)
 
     while not is_valid_day(candidate):
         candidate += timedelta(days=1)
@@ -68,19 +68,33 @@ def generate_exams(plan):
     return exams
 
 
+
+def get_plan_session(plan, sessions):
+
+    if plan.session_policy == "MORNING":
+        return sessions.filter(name="MORNING").first()
+
+    if plan.session_policy == "AFTERNOON":
+        return sessions.filter(name="AFTERNOON").first()
+
+    return None  # or fallback mixed logic
+
 # ----------------------------
 # SCHEDULING ENGINE
 # ----------------------------
 
 def schedule_exams(plan, exams):
-
+    if not plan.is_active:
+        return  # Only schedule exams for the active plan
     sessions = list(
         ExamSession.objects.all().order_by("start_time")
     )
 
-    if not sessions:
-        raise Exception("No ExamSession configured")
+    fixed_session = get_plan_session(plan, sessions)
 
+    if not fixed_session:
+        raise ValueError("No valid session found for the plan's session policy")
+ 
     current_date = plan.start_date
     if isinstance(current_date, str):
         current_date = datetime.strptime(current_date, "%Y-%m-%d").date()
@@ -97,12 +111,15 @@ def schedule_exams(plan, exams):
         ExamSchedule.objects.update_or_create(
             exam=exam,
             defaults={
+                "plan": plan,
                 "date": current_date,
                 "session": session,
                 "is_auto": True,
                 "is_final": False,
             }
         )
+
+        current_date = next_valid_date(current_date)
 
         session_index += 1
 
@@ -117,7 +134,8 @@ def schedule_exams(plan, exams):
 def generate_full_plan(plan):
     if plan is None:
         raise ValueError("SemesterPlan is required but None was provided")
-
+    if plan.is_generated:
+        return ExamSchedule.objects.filter(plan=plan)
     exams = generate_exams(plan)
 
     schedule_exams(plan, exams)
@@ -134,3 +152,23 @@ def generate_full_plan(plan):
     plan.save()
 
     return exam_schedules
+
+
+def regenerate_plan(plan):
+
+    ExamSchedule.objects.filter(plan=plan).delete()
+
+    exams = generate_exams(plan)
+
+    schedule_exams(plan, exams)
+
+    schedules = ExamSchedule.objects.filter(plan=plan)
+
+    allocate_all_exams(schedules)
+
+    assign_all_invigilators(schedules)
+
+    plan.is_generated = True
+    plan.save()
+
+    return schedules

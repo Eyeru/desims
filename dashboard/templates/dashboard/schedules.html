@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Exam Schedule</title>
+</head>
+<body>
+
+<h1>Exam Schedule</h1>
+
+<table border="1" cellpadding="8">
+    <tr>
+        <th>Course Code</th>
+        <th>Course Title</th>
+        <th>Date</th>
+        <th>Session</th>
+    </tr>
+
+    {% for schedule in schedules %}
+    <tr>
+        <td>{{ schedule.exam.course.code }}</td>
+        <td>{{ schedule.exam.course.title }}</td>
+        <td>{{ schedule.date }}</td>
+        <td>{{ schedule.session }}</td>
+    </tr>
+    {% endfor %}
+
+</table>
+
+</body>
+</html>

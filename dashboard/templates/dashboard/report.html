@@ -1,0 +1,15 @@
+<h2>Exam Report</h2>
+
+{% for row in report %}
+
+<hr>
+
+<p><b>{{ row.course_code }} - {{ row.course_title }}</b></p>
+
+<p>Date: {{ row.date }} | Session: {{ row.session }}</p>
+
+<p>Rooms: {{ row.rooms }}</p>
+
+<p>Invigilators: {{ row.invigilators }}</p>
+
+{% endfor %}

@@ -3,6 +3,7 @@ from allocations.models import ExamRoomAllocation
 from invigilation.models import InvigilationAssignment
 from django.db.models import Count
 
+
 def detect_room_conflicts():
     conflicts = []
 
@@ -62,7 +63,9 @@ def detect_capacity_issues():
 
     schedule_map = {}
 
-    allocations = ExamRoomAllocation.objects.select_related("exam_schedule", "exam_schedule__exam")
+    allocations = ExamRoomAllocation.objects.select_related(
+        "exam_schedule", "exam_schedule__exam"
+        )
 
     for alloc in allocations:
         schedule = alloc.exam_schedule
@@ -90,6 +93,7 @@ def detect_capacity_issues():
             })
 
     return conflicts
+
 
 def run_all_conflict_checks():
     return {
