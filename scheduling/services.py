@@ -68,7 +68,6 @@ def generate_exams(plan):
     return exams
 
 
-
 def get_plan_session(plan, sessions):
 
     if plan.session_policy == "MORNING":
@@ -83,6 +82,7 @@ def get_plan_session(plan, sessions):
 # SCHEDULING ENGINE
 # ----------------------------
 
+
 def schedule_exams(plan, exams):
     if not plan.is_active:
         return  # Only schedule exams for the active plan
@@ -93,8 +93,10 @@ def schedule_exams(plan, exams):
     fixed_session = get_plan_session(plan, sessions)
 
     if not fixed_session:
-        raise ValueError("No valid session found for the plan's session policy")
- 
+        raise ValueError(
+            "No valid session found for the plan's session policy"
+            )
+
     current_date = plan.start_date
     if isinstance(current_date, str):
         current_date = datetime.strptime(current_date, "%Y-%m-%d").date()

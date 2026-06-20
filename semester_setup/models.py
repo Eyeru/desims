@@ -1,5 +1,5 @@
 from django.db import models
-from courses.models import Course
+# from courses.models import Course
 
 
 class SemesterPlan(models.Model):

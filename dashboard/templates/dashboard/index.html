@@ -1,28 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Exam Planning Dashboard</title>
+</head>
+<body>
+
 <h1>Exam Planning Dashboard</h1>
 
-{% if summary %}
+{% if active_plan %}
 
-<h3>Active Plan</h3>
+    <h2>Active Plan</h2>
 
-<p>
-{{ summary.plan.academic_year }} -
-Year {{ summary.plan.year_level }} -
-Semester {{ summary.plan.semester }}
-</p>
+    <p>
+        <strong>Academic Year:</strong>
+        {{ active_plan.academic_year }}
+    </p>
 
-<hr>
+    <p>
+        <strong>Year Level:</strong>
+        {{ active_plan.year_level }}
+    </p>
 
-<p>Exams: {{ summary.exams }}</p>
-<p>Schedules: {{ summary.schedules }}</p>
-<p>Allocations: {{ summary.allocations }}</p>
-<p>Invigilations: {{ summary.invigilations }}</p>
+    <p>
+        <strong>Semester:</strong>
+        {{ active_plan.semester }}
+    </p>
 
-<hr>
+    <p>
+        <strong>Program Type:</strong>
+        {{ active_plan.program_type }}
+    </p>
 
-<a href="/schedules/">View Schedule</a>
+    <p>
+        <strong>Students:</strong>
+        {{ active_plan.student_count }}
+    </p>
+
+    <p>
+        <strong>Session Policy:</strong>
+        {{ active_plan.session_policy }}
+    </p>
+
+    <hr>
+
+    <h2>Progress</h2>
+
+    <ul>
+        <li>✓ Exams Generated</li>
+        <li>✓ Schedule Generated</li>
+        <li>✓ Rooms Allocated</li>
+        <li>✓ Invigilators Assigned</li>
+    </ul>
+
+    <hr>
+
+    <h2>Summary</h2>
+
+    <ul>
+        <li>Courses: {{ exam_count }}</li>
+        <li>Schedules: {{ schedule_count }}</li>
+        <li>Allocations: {{ allocation_count }}</li>
+        <li>Invigilations: {{ invigilation_count }}</li>
+    </ul>
+
+    <hr>
+
+    <h2>Quick Actions</h2>
+
+    <p>
+        <a href="{% url 'schedule_view' %}">
+            View Schedule
+        </a>
+    </p>
+
+    <hr>
+
+    <h2>Upcoming Exams</h2>
+
+    <table border="1" cellpadding="8">
+
+        <tr>
+            <th>Course</th>
+            <th>Date</th>
+            <th>Session</th>
+        </tr>
+
+        {% for schedule in recent_schedules %}
+        <tr>
+            <td>{{ schedule.exam.course.code }}</td>
+            <td>{{ schedule.date }}</td>
+            <td>{{ schedule.session }}</td>
+        </tr>
+        {% endfor %}
+
+    </table>
 
 {% else %}
 
-<p>No active plan found.</p>
+    <p>No active plan found.</p>
 
 {% endif %}
+
+</body>
+</html>

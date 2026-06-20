@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Full Exam Schedule</title>
+</head>
+<body>
+
+<h1>Full Examination Schedule</h1>
+
+<table border="1" cellpadding="8">
+
+    <tr>
+        <th>Course</th>
+        <th>Date</th>
+        <th>Session</th>
+        <th>Rooms</th>
+        <th>Invigilators</th>
+    </tr>
+
+    {% for row in rows %}
+
+    <tr>
+
+        <td>
+            {{ row.schedule.exam.course.code }}
+        </td>
+
+        <td>
+            {{ row.schedule.date }}
+        </td>
+
+        <td>
+            {{ row.schedule.session }}
+        </td>
+
+        <td>
+            {% for room in row.rooms %}
+                {{ room.room.name }}<br>
+            {% endfor %}
+        </td>
+
+        <td>
+            {% for inv in row.invigilators %}
+                {{ inv.staff.full_name }}<br>
+            {% endfor %}
+        </td>
+
+    </tr>
+
+    {% endfor %}
+
+</table>
+
+</body>
+</html>
