@@ -24,4 +24,5 @@ urlpatterns = [
     path('reports/', include('reports.urls')),
     path("export/excel/", download_excel),
     path("", include("dashboard.urls")),
+    path("api/", include("api.urls")),
 ]
