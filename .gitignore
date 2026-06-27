@@ -1,8 +1,19 @@
+# Python
 __pycache__/
-*.pyc
+*.py[cod]
 db.sqlite3
 .env
-venv/
-.idea/
+.venv/
+
+# Django
+media/
+
+# React/Vite
+desims-ui/node_modules/
+desims-ui/dist/
+
+# VS Code
 .vscode/
+
+# macOS
 .DS_Store
