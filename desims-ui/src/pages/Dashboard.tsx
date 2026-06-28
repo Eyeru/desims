@@ -1,7 +1,10 @@
+import { useState } from "react";
 import Header from "../components/Header";
 import SummaryCard from "../components/SummaryCard";
 
 function Dashboard() {
+    const [courses, setCourses] = useState(6);
+
     return (
         <>
             <Header />
@@ -10,8 +13,12 @@ function Dashboard() {
 
                 <SummaryCard
                     title="Courses"
-                    value={6}
+                    value={courses}
                 />
+                <button
+                    onClick={() => setCourses(courses + 1)}>
+                    Add Course
+                </button>
 
                 <SummaryCard
                     title="Schedules"
