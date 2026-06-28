@@ -1,4 +1,5 @@
 import Header from "../components/Header";
+import SummaryCard from "../components/SummaryCard";
 
 function Dashboard() {
     return (
@@ -6,23 +7,27 @@ function Dashboard() {
             <Header />
 
             <main className="dashboard">
-                <h2>Exam Planning</h2>
 
-                <div className="card">
-                    <p>
-                        <strong>Academic Year:</strong> 2025/2026
-                    </p>
+                <SummaryCard
+                    title="Courses"
+                    value={6}
+                />
 
-                    <p>
-                        <strong>Semester:</strong> First
-                    </p>
+                <SummaryCard
+                    title="Schedules"
+                    value={6}
+                />
 
-                    <p>
-                        <strong>Program:</strong> Regular
-                    </p>
+                <SummaryCard
+                    title="Rooms"
+                    value={8}
+                />
 
-                    <button>Create Exam Plan</button>
-                </div>
+                <SummaryCard
+                    title="Invigilators"
+                    value={12}
+                />
+
             </main>
         </>
     );

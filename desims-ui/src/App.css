@@ -16,11 +16,17 @@ body {
 
 .dashboard {
     padding: 30px;
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    padding: 30px;
 }
 
 .card {
     background: white;
     padding: 24px;
+    width: 220px;
+    text-align: center;
     border-radius: 8px;
     max-width: 500px;
     box-shadow: 0 2px 8px rgba(0,0,0,.1);
