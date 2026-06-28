@@ -1,27 +1,20 @@
-from django.shortcuts import render
-
-# Create your views here.
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
+from courses.models import Course
+from rooms.models import Room
+from staff.models import Staff
 from scheduling.models import ExamSchedule
-from semester_setup.models import SemesterPlan
-
-from .serializers import SemesterPlanSerializer, ExamScheduleSerializer
 
 
 @api_view(["GET"])
-def plans(request):
-    qs = SemesterPlan.objects.all().order_by("-id")
-    return Response(SemesterPlanSerializer(qs, many=True).data)
+def dashboard(request):
 
+    data = {
+        "courses": Course.objects.count(),
+        "rooms": Room.objects.count(),
+        "staff": Staff.objects.count(),
+        "schedules": ExamSchedule.objects.count(),
+    }
 
-@api_view(["GET"])
-def plan_detail(request, plan_id):
-    plan = SemesterPlan.objects.get(id=plan_id)
-    schedules = ExamSchedule.objects.filter(plan=plan)
-
-    return Response({
-        "plan": SemesterPlanSerializer(plan).data,
-        "schedules": ExamScheduleSerializer(schedules, many=True).data
-    })
+    return Response(data)

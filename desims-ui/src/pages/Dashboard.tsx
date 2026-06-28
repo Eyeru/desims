@@ -1,9 +1,29 @@
-import { useState } from "react";
+import { useState, useEffect} from "react";
+import API from "../services/api";
 import Header from "../components/Header";
 import SummaryCard from "../components/SummaryCard";
+import { DashboardStats } from "../types/Dashboard";
 
 function Dashboard() {
-    const [courses, setCourses] = useState(6);
+    const [stats, setStats] = useState<DashboardStats>({
+    courses: 0,
+    rooms: 0,
+    staff: 0,
+    schedules: 0,
+    });
+    useEffect(() => {
+
+        async function loadDashboard() {
+
+            const response = await API.get("dashboard/");
+
+            setStats(response.data);
+
+        }
+
+        loadDashboard();
+
+    }, []);
 
     return (
         <>
@@ -13,26 +33,22 @@ function Dashboard() {
 
                 <SummaryCard
                     title="Courses"
-                    value={courses}
+                    value={stats.courses}
                 />
-                <button
-                    onClick={() => setCourses(courses + 1)}>
-                    Add Course
-                </button>
 
                 <SummaryCard
                     title="Schedules"
-                    value={6}
+                    value={stats.schedules}
                 />
 
                 <SummaryCard
                     title="Rooms"
-                    value={8}
+                    value={stats.rooms}
                 />
 
                 <SummaryCard
                     title="Invigilators"
-                    value={12}
+                    value={stats.staff}
                 />
 
             </main>
