@@ -2,14 +2,17 @@ import { useState, useEffect} from "react";
 import API from "../services/api";
 import Header from "../components/Header";
 import SummaryCard from "../components/SummaryCard";
-import { DashboardStats } from "../types/Dashboard";
+import { DashboardResponse } from "../types/Dashboard";
 
 function Dashboard() {
-    const [stats, setStats] = useState<DashboardStats>({
-    courses: 0,
-    rooms: 0,
-    staff: 0,
-    schedules: 0,
+    const [dashboard, setDashboard] = useState<DashboardResponse>({
+    active_plan: null,
+    statistics: {
+        courses: 0,
+        rooms: 0,
+        staff: 0,
+        schedules: 0,
+    },
     });
     useEffect(() => {
 
@@ -17,7 +20,7 @@ function Dashboard() {
 
             const response = await API.get("dashboard/");
 
-            setStats(response.data);
+            setDashboard(response.data);
 
         }
 
@@ -33,22 +36,22 @@ function Dashboard() {
 
                 <SummaryCard
                     title="Courses"
-                    value={stats.courses}
+                    value={dashboard.statistics.courses}
                 />
 
                 <SummaryCard
                     title="Schedules"
-                    value={stats.schedules}
+                    value={dashboard.statistics.schedules}
                 />
 
                 <SummaryCard
                     title="Rooms"
-                    value={stats.rooms}
+                    value={dashboard.statistics.rooms}
                 />
 
                 <SummaryCard
                     title="Invigilators"
-                    value={stats.staff}
+                    value={dashboard.statistics.staff}
                 />
 
             </main>
