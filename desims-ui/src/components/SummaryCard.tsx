@@ -1,3 +1,4 @@
+
 type SummaryCardProps = {
     title: string;
     value: number;
@@ -5,10 +6,15 @@ type SummaryCardProps = {
 
 function SummaryCard({ title, value }: SummaryCardProps) {
     return (
-        <div className="card">
-            <h3>{title}</h3>
-            <h1>{value}</h1>
-        </div>
+        <section className="card">
+            <p className="card-label">{title}</p>
+
+            <p className="card-value">{value}</p>
+
+            <div className="card-footer">
+                Department examination overview
+            </div>
+        </section>
     );
 }
 
