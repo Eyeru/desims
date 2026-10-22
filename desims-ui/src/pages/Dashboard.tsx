@@ -1,8 +1,9 @@
-import { useState, useEffect} from "react";
+import {useEffect, useState} from "react";
 import API from "../services/api";
 import Header from "../components/Header";
 import SummaryCard from "../components/SummaryCard";
-import { DashboardResponse } from "../types/Dashboard";
+import type { DashboardResponse } from "../types/Dashboard";
+import ActivePlanCard from "../components/ActivePlanCard";
 
 function Dashboard() {
     const [dashboard, setDashboard] = useState<DashboardResponse>({
@@ -15,17 +16,16 @@ function Dashboard() {
     },
     });
     useEffect(() => {
-
         async function loadDashboard() {
-
-            const response = await API.get("dashboard/");
-
-            setDashboard(response.data);
-
+            try {
+                const response = await API.get("dashboard/");
+                setDashboard(response.data);
+            } catch (error) {
+                console.error("Failed to load dashboard:", error);
+            }
         }
 
         loadDashboard();
-
     }, []);
 
     return (
@@ -33,6 +33,9 @@ function Dashboard() {
             <Header />
 
             <main className="dashboard">
+                {dashboard.active_plan && (
+                    <ActivePlanCard plan={dashboard.active_plan} />
+    )}
 
                 <SummaryCard
                     title="Courses"
