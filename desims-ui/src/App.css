@@ -164,3 +164,92 @@ button:hover {
         flex-wrap: wrap;
     }
 }
+
+
+.header {
+    background: #0f4c81;
+    color: white;
+    padding: 24px 30px;
+}
+
+.header-brand {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 22px;
+}
+
+.header-logo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 46px;
+    height: 46px;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    border-radius: 10px;
+    font-size: 24px;
+    font-weight: 700;
+}
+
+.header-brand h1 {
+    margin: 0;
+    font-size: 25px;
+}
+
+.header-brand p {
+    margin: 5px 0 0;
+    color: #dbeafe;
+    font-size: 13px;
+}
+
+.navigation {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.nav-link {
+    color: #e2e8f0;
+    text-decoration: none;
+    padding: 10px 12px;
+    border-radius: 6px;
+    font-size: 14px;
+    transition: background 0.2s ease;
+}
+
+.nav-link:hover,
+.nav-link.active {
+    background: rgba(255, 255, 255, 0.16);
+    color: white;
+}
+
+@media (max-width: 600px) {
+    .header {
+        padding: 20px 16px;
+    }
+
+    .navigation {
+        gap: 4px;
+    }
+
+    .nav-link {
+        padding: 9px;
+        font-size: 13px;
+    }
+}
+
+.placeholder-page{
+    padding: 24px;
+    max-width: 1100px;
+    margin: 0 auto;
+}
+
+.placeholder-page h1{
+    margin-bottom:  12px;
+    font-size: 1.6rem;
+}
+
+.placeholder-page p{
+    color: #666;
+    line-height: 1.6;
+}

@@ -1,8 +1,29 @@
+import { Navigate, Route, Routes } from "react-router-dom";
 import Dashboard from "./pages/Dashboard";
+import PlaceholderPage from "./pages/PlaceholderPage";
 import "./App.css";
 
 function App() {
-  return <Dashboard />;
+  return (
+        <Routes>
+            <Route path="*" element={<Navigate to="/" replace />} />
+            <Route path="/academic-years" element={
+                <PlaceholderPage title="Acadamic Years" />} />
+            <Route path="/semester-plans" element={
+                <PlaceholderPage title="Semester Plans" />} />
+            <Route path="/courses" element={
+                <PlaceholderPage title="Courses" />} />
+            <Route path="/rooms" element={
+                <PlaceholderPage title="Rooms" />} /> 
+            <Route path="/staff" element={
+                <PlaceholderPage title="Staff" />} />
+            <Route path="/exam-schedules" element={
+                <PlaceholderPage title="Exam schedules" />} />
+            <Route path="/reports" element={
+                <PlaceholderPage title="Reports" />} />
+            <Route path="/" element={<Dashboard />} />
+        </Routes>
+    );
 }
 
 export default App;
