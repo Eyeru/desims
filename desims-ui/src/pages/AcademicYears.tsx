@@ -27,6 +27,29 @@ function AcademicYears() {
             });
     }
 
+    async function handleActivate(year: AcademicYear) {
+        const confirmed = window.confirm(
+            `Activate academic year ${year.name}? The currently active year will become inactive.`
+        );
+
+        if (!confirmed) return;
+
+        setError("");
+        setSuccess("");
+
+        try {
+            await API.post(`academic-years/${year.id}/activate/`);
+            setSuccess(`${year.name} is now the active academic year.`);
+            loadYears();
+        } catch (err: any) {
+            const message =
+                err.response?.data?.error ??
+                err.response?.data?.detail;
+
+            setError(message || "Failed to activate academic year.");
+        }
+    }
+
     useEffect(() => {
         loadYears();
     }, []);
@@ -110,6 +133,7 @@ function AcademicYears() {
                             <tr>
                                 <th>Academic Year</th>
                                 <th>Status</th>
+                                <th>Actions</th>
                             </tr>
                         </thead>
 
@@ -119,6 +143,18 @@ function AcademicYears() {
                                     <td>{year.name}</td>
                                     <td>
                                         {year.is_active ? "Active" : "Inactive"}
+                                    </td>
+                                    <td>
+                                        {!year.is_active && (
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    handleActivate(year);
+                                                }}
+                                            >
+                                                Activate
+                                            </button>
+                                        )}
                                     </td>
                                 </tr>
                             ))}

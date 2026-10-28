@@ -1,7 +1,7 @@
 from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-
+from django.shortcuts import get_object_or_404
 from academics.models import AcademicYear
 from courses.models import Course
 from rooms.models import Room
@@ -79,3 +79,22 @@ def academic_year_list(request):
     ]
 
     return Response(data)
+
+
+@api_view(["POST"])
+def activate_academic_year(request, year_id):
+    year = get_object_or_404(AcademicYear, id=year_id)
+
+    # Deactivate any currently active academic year.
+    AcademicYear.objects.filter(is_active=True).update(is_active=False)
+
+    # Activate the selected academic year.
+    year.is_active = True
+    year.save(update_fields=["is_active"])
+
+    return Response({
+        "id": year.id,
+        "name": year.name,
+        "is_active": year.is_active,
+        "message": f"Academic year {year.name} is now active.",
+    })
