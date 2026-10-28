@@ -6,4 +6,8 @@ urlpatterns = [
     path("academic-years/", views.academic_year_list),
     path("academic-years/<int:year_id>/activate/",
          views.activate_academic_year,),
+    path("semester-plans/", views.semester_plan_list),
+    path("semester-plans/create/", views.create_semester_plan),
+    path("semester-plans/<int:plan_id>/activate/",
+         views.activate_semester_plan,),
 ]
