@@ -13,7 +13,8 @@ from semester_setup.models import SemesterPlan
 @api_view(["GET"])
 def dashboard(request):
 
-    plan = SemesterPlan.objects.filter(is_active=True).first()
+    plan = SemesterPlan.objects.filter(is_active=True, 
+                                       academic_year__is_active=True).first()
 
     active_plan = None
 
