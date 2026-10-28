@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import Dashboard from "./pages/Dashboard";
 import PlaceholderPage from "./pages/PlaceholderPage";
+import AcademicYears from "./pages/AcademicYears";
 import "./App.css";
 
 function App() {
@@ -8,7 +9,7 @@ function App() {
         <Routes>
             <Route path="*" element={<Navigate to="/" replace />} />
             <Route path="/academic-years" element={
-                <PlaceholderPage title="Acadamic Years" />} />
+                <AcademicYears />} />
             <Route path="/semester-plans" element={
                 <PlaceholderPage title="Semester Plans" />} />
             <Route path="/courses" element={

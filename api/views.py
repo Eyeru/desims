@@ -1,11 +1,14 @@
+from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
+from academics.models import AcademicYear
 from courses.models import Course
 from rooms.models import Room
 from staff.models import Staff
 from scheduling.models import ExamSchedule
 from semester_setup.models import SemesterPlan
+
 
 @api_view(["GET"])
 def dashboard(request):
@@ -32,5 +35,47 @@ def dashboard(request):
             "schedules": ExamSchedule.objects.count(),
         },
     }
+
+    return Response(data)
+
+
+@api_view(["GET", "POST"])
+def academic_year_list(request):
+    if request.method == "POST":
+        name = request.data.get("name", "").strip()
+
+        if not name:
+            return Response(
+                {"error": "Academic year name is required."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if AcademicYear.objects.filter(name=name).exists():
+            return Response(
+                {"error": "This academic year already exists."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        year = AcademicYear.objects.create(name=name)
+
+        return Response(
+            {
+                "id": year.id,
+                "name": year.name,
+                "is_active": year.is_active,
+            },
+            status=status.HTTP_201_CREATED,
+        )
+
+    years = AcademicYear.objects.all().order_by("-name")
+
+    data = [
+        {
+            "id": year.id,
+            "name": year.name,
+            "is_active": year.is_active,
+        }
+        for year in years
+    ]
 
     return Response(data)
