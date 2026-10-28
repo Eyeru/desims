@@ -253,3 +253,93 @@ button:hover {
     color: #666;
     line-height: 1.6;
 }
+
+
+/* Semester plan form */
+.form-container {
+    max-width: 760px;
+    margin: 24px 0 32px;
+    padding: 24px;
+    background-color: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
+}
+
+.form-container h2 {
+    margin-top: 0;
+    margin-bottom: 24px;
+    color: #1e293b;
+    font-size: 1.35rem;
+}
+
+.form-container label {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 18px;
+    color: #334155;
+    font-size: 0.95rem;
+    font-weight: 600;
+}
+
+.form-container input,
+.form-container select {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 11px 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 7px;
+    background-color: #ffffff;
+    color: #0f172a;
+    font: inherit;
+}
+
+.form-container input:focus,
+.form-container select:focus {
+    outline: none;
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+.form-container button {
+    padding: 12px 20px;
+    border: none;
+    border-radius: 7px;
+    background-color: #2563eb;
+    color: #ffffff;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.form-container button:hover:not(:disabled) {
+    background-color: #1d4ed8;
+}
+
+.form-container button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.success-message {
+    margin: 12px 0;
+    padding: 12px;
+    border-radius: 7px;
+    background-color: #dcfce7;
+    color: #166534;
+}
+
+.error-message {
+    margin: 12px 0;
+    padding: 12px;
+    border-radius: 7px;
+    background-color: #fee2e2;
+    color: #991b1b;
+}
+
+@media (max-width: 600px) {
+    .form-container {
+        padding: 16px;
+    }
+}
