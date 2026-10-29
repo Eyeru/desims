@@ -8,6 +8,7 @@ from rooms.models import Room
 from staff.models import Staff
 from scheduling.models import ExamSchedule
 from semester_setup.models import SemesterPlan
+from datetime import date
 
 
 @api_view(["GET"])
@@ -101,9 +102,6 @@ def activate_academic_year(request, year_id):
     })
 
 
-from datetime import date
-
-
 @api_view(["GET"])
 def semester_plan_list(request):
     plans = SemesterPlan.objects.select_related(
@@ -160,7 +158,12 @@ def create_semester_plan(request):
         end_date = date.fromisoformat(data["end_date"])
     except (ValueError, TypeError):
         return Response(
-            {"error": "Please provide valid numbers and dates in YYYY-MM-DD format."},
+            {
+                "error": (
+                    "Please provide valid numbers and dates in YYYY-MM-DD "
+                    "format."
+                )
+            },
             status=status.HTTP_400_BAD_REQUEST,
         )
 
@@ -241,6 +244,7 @@ def create_semester_plan(request):
     )
 
 
+
 @api_view(["POST"])
 def activate_semester_plan(request, plan_id):
     plan = get_object_or_404(
@@ -248,13 +252,13 @@ def activate_semester_plan(request, plan_id):
         id=plan_id,
     )
 
-    # Deactivate other plans for the same academic year.
+    # Deactivate every active semester plan,
+    # regardless of its academic year.
     SemesterPlan.objects.filter(
-        academic_year=plan.academic_year,
         is_active=True,
     ).update(is_active=False)
 
-    # Activate the selected plan.
+    # Activate only the selected plan.
     plan.is_active = True
     plan.save(update_fields=["is_active"])
 

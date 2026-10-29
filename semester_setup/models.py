@@ -54,7 +54,7 @@ class SemesterPlan(models.Model):
     is_generated = models.BooleanField(default=False)
 
     created_at = models.DateTimeField(auto_now_add=True)
-   
+
     is_active = models.BooleanField(default=False)
 
     def __str__(self):
