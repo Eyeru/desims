@@ -10,4 +10,8 @@ urlpatterns = [
     path("semester-plans/create/", views.create_semester_plan),
     path("semester-plans/<int:plan_id>/activate/",
          views.activate_semester_plan,),
+    path(
+        "semester-plans/<int:plan_id>/courses/",
+        views.semester_plan_courses,
+     ),
 ]

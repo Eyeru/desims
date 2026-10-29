@@ -267,3 +267,39 @@ def activate_semester_plan(request, plan_id):
         "is_active": plan.is_active,
         "message": "Semester plan activated successfully.",
     })
+
+
+@api_view(["GET"])
+def semester_plan_courses(request, plan_id):
+    plan = get_object_or_404(
+        SemesterPlan,
+        id=plan_id,
+    )
+
+    courses = Course.objects.filter(
+        year_level=plan.year_level,
+        semester=plan.semester,
+        program_type=plan.program_type,
+    ).order_by("code")
+
+    data = [
+        {
+            "id": course.id,
+            "code": course.code,
+            "title": course.title,
+            "year_level": course.year_level,
+            "semester": course.semester,
+            "program_type": course.program_type,
+        }
+        for course in courses
+    ]
+
+    return Response({
+        "plan_id": plan.id,
+        "academic_year": plan.academic_year.name,
+        "year_level": plan.year_level,
+        "semester": plan.semester,
+        "program_type": plan.program_type,
+        "course_count": len(data),
+        "courses": data,
+    })

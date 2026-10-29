@@ -45,6 +45,9 @@ function Header() {
                 <NavLink to="/reports" className="nav-link">
                     Reports
                 </NavLink>
+                <NavLink to="/semester-plan-courses">
+                    Plan Courses
+                </NavLink>
             </nav>
         </header>
     );

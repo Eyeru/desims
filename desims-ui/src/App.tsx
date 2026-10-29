@@ -2,6 +2,8 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import Dashboard from "./pages/Dashboard";
 import PlaceholderPage from "./pages/PlaceholderPage";
 import AcademicYears from "./pages/AcademicYears";
+import SemesterPlans from "./pages/SemesterPlans";
+import SemesterPlanCourses from "./pages/SemesterPlanCourses";
 import "./App.css";
 
 function App() {
@@ -11,7 +13,7 @@ function App() {
             <Route path="/academic-years" element={
                 <AcademicYears />} />
             <Route path="/semester-plans" element={
-                <PlaceholderPage title="Semester Plans" />} />
+                <SemesterPlans />} />
             <Route path="/courses" element={
                 <PlaceholderPage title="Courses" />} />
             <Route path="/rooms" element={
@@ -22,6 +24,7 @@ function App() {
                 <PlaceholderPage title="Exam schedules" />} />
             <Route path="/reports" element={
                 <PlaceholderPage title="Reports" />} />
+            <Route path="/semester-plan-courses" element={<SemesterPlanCourses />}/>
             <Route path="/" element={<Dashboard />} />
         </Routes>
     );
