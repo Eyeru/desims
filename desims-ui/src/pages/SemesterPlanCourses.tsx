@@ -87,9 +87,22 @@ function SemesterPlanCourses() {
         <div className="page-container">
             <h1>Semester Plan Courses</h1>
 
+
+
             <p>
-                Select a semester plan to view the courses that match it.
+                Review the courses assigned to a semester plan before exam scheduling.
             </p>
+
+            {plans.some((plan) => plan.is_active) ? (
+                <p className="success-message">
+                    The active semester plan is marked in the selection list.
+                </p>
+            ) : (
+                <p className="error-message">
+                    No semester plan is active. Activate a plan before preparing exams.
+                </p>
+            )}
+
 
             {plans.length === 0 ? (
                 <p>Create a semester plan before viewing its courses.</p>
@@ -109,6 +122,7 @@ function SemesterPlanCourses() {
                                 <option key={plan.id} value={plan.id}>
                                     {plan.academic_year} — Year {plan.year_level},
                                     Semester {plan.semester} — {plan.program_type}
+                                    {plan.is_active ? " (Active)" : ""}
                                 </option>
                             ))}
                         </select>
@@ -128,8 +142,14 @@ function SemesterPlanCourses() {
                     </h2>
 
                     <p>
-                        Program: {result.program_type} |
-                        Total matching courses: {result.course_count}
+                        Program: {result.program_type} | Total matching courses:{" "}
+                        {result.course_count}
+                    </p>
+
+                    <p>
+                        {result.course_count > 0
+                            ? "Courses loaded successfully. Review the list below before proceeding to exam scheduling."
+                            : "No matching courses found. Add or correct the course records before proceeding."}
                     </p>
 
                     {result.courses.length === 0 ? (
