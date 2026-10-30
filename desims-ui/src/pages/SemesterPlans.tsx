@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import API from "../services/api";
 import type { SemesterPlan, CreateSemesterPlanData } from "../types/SemesterPlan";
 import type { AcademicYear } from "../types/AcademicYear";
+import Header from "../components/Header";
 
 function SemesterPlans() {
     const [plans, setPlans] = useState<SemesterPlan[]>([]);
@@ -151,7 +152,10 @@ function SemesterPlans() {
     }
 
     return (
-        <div className="page-container">
+        <>
+            <Header />
+
+            <main className="page-container">
             <h1>Semester Plans</h1>
 
             <form onSubmit={handleCreatePlan} className="form-container">
@@ -375,7 +379,8 @@ function SemesterPlans() {
                     </table>
                 </div>
             )}
-        </div>
+            </main>
+        </>
     );
 }
 

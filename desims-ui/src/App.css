@@ -115,3 +115,127 @@
         padding: 16px;
     }
 }
+
+
+/* =========================================================
+   SEMESTER PLANS PAGE
+   ========================================================= */
+
+.page-container {
+    width: 100%;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 32px;
+}
+
+.page-container > h1 {
+    margin-bottom: 8px;
+    color: var(--forest-green);
+}
+
+/* Two-column form layout */
+
+.form-container {
+    max-width: 100%;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px 24px;
+    margin: 24px 0 32px;
+}
+
+.form-container h2,
+.form-container .success-message,
+.form-container .error-message,
+.form-container > button,
+.form-container > p {
+    grid-column: 1 / -1;
+}
+
+.form-container label {
+    margin-bottom: 0;
+}
+
+.form-container > button {
+    justify-self: start;
+    min-width: 190px;
+}
+
+/* Semester plans table */
+
+.table-container {
+    width: 100%;
+    overflow-x: auto;
+    margin-top: 20px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+}
+
+.table-container table {
+    width: 100%;
+    min-width: 950px;
+    border-collapse: collapse;
+    text-align: left;
+}
+
+.table-container th {
+    padding: 15px 14px;
+    background: #eaf3ed;
+    color: var(--forest-green);
+    font-size: 13px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.table-container td {
+    padding: 14px;
+    border-top: 1px solid var(--border);
+    color: var(--text);
+    font-size: 13px;
+    white-space: nowrap;
+}
+
+.table-container tbody tr:hover {
+    background: #f7faf7;
+}
+
+.table-container button {
+    padding: 8px 14px;
+    border: none;
+    border-radius: 6px;
+    background: var(--forest-green);
+    color: white;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.table-container button:hover:not(:disabled) {
+    background: #103b29;
+}
+
+.table-container button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Responsive layout */
+
+@media (max-width: 700px) {
+    .page-container {
+        padding: 20px 16px;
+    }
+
+    .form-container {
+        grid-template-columns: 1fr;
+        padding: 18px;
+    }
+
+    .form-container h2,
+    .form-container .success-message,
+    .form-container .error-message,
+    .form-container > button,
+    .form-container > p {
+        grid-column: 1;
+    }
+}

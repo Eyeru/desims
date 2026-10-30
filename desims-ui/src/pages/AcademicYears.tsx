@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import API from "../services/api";
 import type { AcademicYear } from "../types/AcademicYear";
+import Header from "../components/Header";
 
 function AcademicYears() {
     const [years, setYears] = useState<AcademicYear[]>([]);
@@ -85,6 +86,8 @@ function AcademicYears() {
     }
 
     return (
+        <>
+            <Header />
         <main className="dashboard">
             <section className="active-plan-card">
                 <h2>Academic Years</h2>
@@ -163,6 +166,7 @@ function AcademicYears() {
                 )}
             </section>
         </main>
+        </>
     );
 }
 

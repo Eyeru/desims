@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import API from "../services/api";
 import type { SemesterPlan } from "../types/SemesterPlan";
 import type { SemesterPlanCoursesResponse } from "../types/SemesterPlanCourses";
+import Header from "../components/Header";
 
 function SemesterPlanCourses() {
     const [plans, setPlans] = useState<SemesterPlan[]>([]);
@@ -170,6 +171,8 @@ function SemesterPlanCourses() {
     }
 
     return (
+        <>
+            <Header />
         <div className="page-container">
             <h1>Semester Plan Courses</h1>
 
@@ -342,6 +345,7 @@ function SemesterPlanCourses() {
                 </>
             )}
         </div>
+        </>
     );
 }
 
