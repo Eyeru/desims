@@ -11,7 +11,81 @@ function SemesterPlanCourses() {
         useState<SemesterPlanCoursesResponse | null>(null);
     const [loadingPlans, setLoadingPlans] = useState(true);
     const [loadingCourses, setLoadingCourses] = useState(false);
+    const [generatingExams, setGeneratingExams] = useState(false);
+    const [generationMessage, setGenerationMessage] = useState("");
+    const [generatingSchedule, setGeneratingSchedule] = useState(false);
+    const [scheduleMessage, setScheduleMessage] = useState("");
+    const [scheduleResult, setScheduleResult] = useState<any>(null);
     const [error, setError] = useState("");
+
+    const generateExams = async () => {
+        if (!selectedPlanId || !result || result.course_count === 0) {
+            return;
+        }
+
+        try {
+            setGeneratingExams(true);
+            setError("");
+            setGenerationMessage("");
+
+            const response = await API.post(
+                `semester-plans/${selectedPlanId}/generate-exams/`,
+                {}
+            );
+
+            setGenerationMessage(response.data.message);
+        } catch (err: unknown) {
+            if (
+                typeof err === "object" &&
+                err !== null &&
+                "response" in err
+            ) {
+                setError("Could not generate exams. Check the server response.");
+            } else {
+                setError("Could not connect to the server. Check that Django is running.");
+            }
+        } finally {
+            setGeneratingExams(false);
+        }
+    };
+
+
+    const generateSchedule = async () => {
+            if (!selectedPlanId) {
+                return;
+            }
+
+            try {
+                setGeneratingSchedule(true);
+                setError("");
+                setScheduleMessage("");
+                setScheduleResult(null);
+
+                const response = await API.post(
+                    `semester-plans/${selectedPlanId}/generate-schedule/`,
+                    {}
+                );
+
+                setScheduleResult(response.data);
+                setScheduleMessage(response.data.message);
+            } catch (err: unknown) {
+                if (
+                    typeof err === "object" &&
+                    err !== null &&
+                    "response" in err
+                ) {
+                    setError(
+                        "Could not generate the schedule. The plan may already have schedules, or the server returned a validation error."
+                    );
+                } else {
+                    setError(
+                        "Could not connect to the server. Check that Django is running."
+                    );
+                }
+            } finally {
+                setGeneratingSchedule(false);
+            }
+        };
 
     useEffect(() => {
         async function loadPlans() {
@@ -42,6 +116,8 @@ function SemesterPlanCourses() {
     useEffect(() => {
         if (!selectedPlanId) {
             setResult(null);
+            setScheduleResult(null);
+            setScheduleMessage("");
             return;
         }
 
@@ -60,6 +136,16 @@ function SemesterPlanCourses() {
 
                 if (!cancelled) {
                     setResult(response.data);
+                    const scheduleResponse = await API.get(
+                        `semester-plans/${selectedPlanId}/schedule/`
+                    );
+
+                    if (!cancelled && scheduleResponse.data.scheduled_count > 0) {
+                        setScheduleResult(scheduleResponse.data);
+                        setScheduleMessage(
+                            `${scheduleResponse.data.scheduled_count} saved exam(s) loaded.`
+                        );
+                    }
                 }
             } catch {
                 if (!cancelled) {
@@ -145,6 +231,75 @@ function SemesterPlanCourses() {
                         Program: {result.program_type} | Total matching courses:{" "}
                         {result.course_count}
                     </p>
+                    <div className="form-container">
+                        <button
+                            type="button"
+                            onClick={generateExams}
+                            disabled={
+                                generatingExams ||
+                                loadingCourses ||
+                                result.course_count === 0
+                            }
+                        >
+                            {generatingExams ? "Generating Exams..." : "Generate Exams"}
+                        </button>
+                        <button
+                            type="button"
+                            onClick={generateSchedule}
+                            disabled={
+                                generatingSchedule ||
+                                generatingExams ||
+                                loadingCourses ||
+                                result.course_count === 0
+                            }
+                        >
+                            {generatingSchedule
+                                ? "Generating Schedule..."
+                                : "Generate Schedule"}
+                        </button>
+                        {generationMessage && (
+                            <p className="success-message">
+                                {generationMessage}
+                            </p>
+                        )}
+
+                        {scheduleMessage && (
+                            <p className="success-message">
+                                {scheduleMessage}
+                            </p>
+                        )}
+
+                        {scheduleResult && (
+                            <div className="table-container">
+                                <h3>Generated Examination Timetable</h3>
+
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Course Code</th>
+                                            <th>Course Title</th>
+                                            <th>Exam Date</th>
+                                            <th>Session</th>
+                                        </tr>
+                                    </thead>
+
+                                    <tbody>
+                                        {scheduleResult.schedules.map(
+                                            (schedule: any, index: number) => (
+                                                <tr key={index}>
+                                                    <td>{schedule.exam_code}</td>
+                                                    <td>{schedule.exam_title}</td>
+                                                    <td>{schedule.date}</td>
+                                                    <td>{schedule.session}</td>
+                                                </tr>
+                                            )
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
+
+                    </div>
 
                     <p>
                         {result.course_count > 0

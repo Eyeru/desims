@@ -14,4 +14,16 @@ urlpatterns = [
         "semester-plans/<int:plan_id>/courses/",
         views.semester_plan_courses,
      ),
+    path(
+          "semester-plans/<int:plan_id>/generate-exams/",
+          views.generate_plan_exams,
+     ),
+    path(
+          "semester-plans/<int:plan_id>/generate-schedule/",
+          views.generate_plan_schedule,
+     ),
+    path(
+          "semester-plans/<int:plan_id>/schedule/",
+          views.semester_plan_schedule,
+     ),
 ]

@@ -1,98 +1,106 @@
-:root {
-  --text: #6b6375;
-  --text-h: #08060d;
-  --bg: #fff;
-  --border: #e5e4e7;
-  --code-bg: #f4f3ec;
-  --accent: #aa3bff;
-  --accent-bg: rgba(170, 59, 255, 0.1);
-  --accent-border: rgba(170, 59, 255, 0.5);
-  --social-bg: rgba(244, 243, 236, 0.5);
-  --shadow:
-    rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
 
+/* =========================================================
+   DESIMS — University of Gondar Inspired Design System
+   ========================================================= */
+
+:root {
+  /* Main colors */
+  --text: #52645a;
+  --text-h: #173b2b;
+  --bg: #f5f8f5;
+  --surface: #ffffff;
+  --border: #dce8df;
+  --code-bg: #eef4ef;
+
+  /* University-inspired colors */
+  --accent: #174c35;
+  --accent-bg: #eaf3ed;
+  --accent-border: #b9d4c2;
+
+  --university-blue: #2879c7;
+  --university-gold: #e5b83f;
+  --forest-green: #174c35;
+
+  /* Effects */
+  --shadow: 0 4px 14px rgba(23, 76, 53, 0.07);
+
+  /* Typography */
   --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
   --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
   --mono: ui-monospace, Consolas, monospace;
 
-  font: 18px/145% var(--sans);
-  letter-spacing: 0.18px;
-  color-scheme: light dark;
+  font: 16px/1.5 var(--sans);
+  letter-spacing: 0;
   color: var(--text);
   background: var(--bg);
+
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-
-  @media (max-width: 1024px) {
-    font-size: 16px;
-  }
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --text: #9ca3af;
-    --text-h: #f3f4f6;
-    --bg: #16171d;
-    --border: #2e303a;
-    --code-bg: #1f2028;
-    --accent: #c084fc;
-    --accent-bg: rgba(192, 132, 252, 0.15);
-    --accent-border: rgba(192, 132, 252, 0.5);
-    --social-bg: rgba(47, 48, 58, 0.5);
-    --shadow:
-      rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
-  }
+/* =========================================================
+   GLOBAL RESET
+   ========================================================= */
 
-  #social .button-icon {
-    filter: invert(1) brightness(2);
-  }
-}
-
-#root {
-  width: 1126px;
-  max-width: 100%;
-  margin: 0 auto;
-  text-align: center;
-  border-inline: 1px solid var(--border);
-  min-height: 100svh;
-  display: flex;
-  flex-direction: column;
+* {
   box-sizing: border-box;
 }
 
 body {
   margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  background: var(--bg);
+}
+
+#root {
+  width: 100%;
+  min-height: 100vh;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
 }
 
 h1,
-h2 {
+h2,
+h3 {
   font-family: var(--heading);
-  font-weight: 500;
   color: var(--text-h);
+  font-weight: 600;
 }
 
 h1 {
-  font-size: 56px;
-  letter-spacing: -1.68px;
-  margin: 32px 0;
-  @media (max-width: 1024px) {
-    font-size: 36px;
-    margin: 20px 0;
-  }
-}
-h2 {
-  font-size: 24px;
-  line-height: 118%;
-  letter-spacing: -0.24px;
+  font-size: 30px;
+  letter-spacing: -0.7px;
   margin: 0 0 8px;
-  @media (max-width: 1024px) {
-    font-size: 20px;
-  }
 }
+
+h2 {
+  font-size: 20px;
+  line-height: 1.3;
+  margin: 0 0 16px;
+}
+
+h3 {
+  font-size: 17px;
+  margin: 0 0 12px;
+}
+
 p {
   margin: 0;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
 }
 
 code,
@@ -104,8 +112,291 @@ code,
 }
 
 code {
-  font-size: 15px;
-  line-height: 135%;
+  font-size: 14px;
   padding: 4px 8px;
   background: var(--code-bg);
+}
+
+/* =========================================================
+   DASHBOARD LAYOUT
+   ========================================================= */
+
+.dashboard {
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 32px;
+  text-align: left;
+}
+
+.dashboard-welcome {
+  margin-bottom: 32px;
+}
+
+.dashboard-welcome p {
+  color: var(--text);
+  font-size: 15px;
+}
+
+.dashboard-section {
+  margin-bottom: 32px;
+}
+
+.dashboard-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+
+/* =========================================================
+   SUMMARY CARDS
+   ========================================================= */
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-top: 3px solid var(--forest-green);
+  border-radius: 12px;
+  padding: 22px;
+  box-shadow: var(--shadow);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(23, 76, 53, 0.10);
+}
+
+.card-label {
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.card-value {
+  color: var(--forest-green);
+  font-size: 32px;
+  font-weight: 700;
+  margin: 12px 0;
+}
+
+.card-footer {
+  color: #7b8b80;
+  font-size: 12px;
+}
+
+/* =========================================================
+   ACTIVE SEMESTER PLAN
+   ========================================================= */
+
+.active-plan-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 5px solid var(--forest-green);
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: var(--shadow);
+}
+
+.active-plan-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.active-plan-eyebrow {
+  color: var(--university-blue);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+.active-plan-description {
+  color: var(--text);
+  font-size: 14px;
+}
+
+.active-plan-status {
+  background: var(--accent-bg);
+  color: var(--forest-green);
+  border: 1px solid var(--accent-border);
+  border-radius: 20px;
+  padding: 5px 14px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.active-plan-details {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.plan-detail {
+  background: #f7faf7;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px;
+}
+
+.plan-detail-label {
+  display: block;
+  color: var(--text);
+  font-size: 12px;
+  margin-bottom: 6px;
+}
+
+.plan-detail strong {
+  color: var(--text-h);
+  font-size: 14px;
+}
+
+/* =========================================================
+   RESPONSIVE DESIGN
+   ========================================================= */
+
+@media (max-width: 800px) {
+  .dashboard {
+    padding: 24px;
+  }
+
+  .active-plan-details {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  h1 {
+    font-size: 24px;
+  }
+
+  h2 {
+    font-size: 18px;
+  }
+
+  .dashboard {
+    padding: 20px 16px;
+  }
+
+  .dashboard-summary-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .active-plan-header {
+    flex-direction: column;
+  }
+
+  .active-plan-details {
+    grid-template-columns: 1fr;
+  }
+
+  .card {
+    padding: 18px;
+  }
+}
+
+/* HEADER */
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    padding: 18px 32px;
+    background: #ffffff;
+    border-bottom: 3px solid var(--university-gold);
+    box-shadow: var(--shadow);
+}
+
+.header-brand {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-shrink: 0;
+}
+
+.header-logo {
+    width: 58px;
+    height: 58px;
+    object-fit: contain;
+}
+
+.header-brand-text h1 {
+    color: var(--forest-green);
+    font-size: 25px;
+    margin: 0;
+    letter-spacing: 0.5px;
+}
+
+.header-brand-text p {
+    color: var(--text-h);
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.header-brand-text span {
+    color: var(--text);
+    font-size: 11px;
+}
+
+.navigation {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.nav-link {
+    color: var(--text-h);
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 500;
+    padding: 9px 11px;
+    border-radius: 7px;
+    transition: all 0.2s ease;
+}
+
+.nav-link:hover {
+    color: var(--forest-green);
+    background: var(--accent-bg);
+}
+
+.nav-link.active {
+    color: #ffffff;
+    background: var(--forest-green);
+}
+
+@media (max-width: 900px) {
+    .header {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .navigation {
+        justify-content: flex-start;
+    }
+}
+
+@media (max-width: 480px) {
+    .header {
+        padding: 16px;
+    }
+
+    .header-logo {
+        width: 46px;
+        height: 46px;
+    }
+
+    .navigation {
+        gap: 4px;
+    }
+
+    .nav-link {
+        padding: 8px;
+        font-size: 12px;
+    }
 }

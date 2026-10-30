@@ -5,11 +5,16 @@ function Header() {
     return (
         <header className="header">
             <div className="header-brand">
-                <div className="header-logo">D</div>
+                <img
+                    src="/uog-logo.png"
+                    alt="University of Gondar logo"
+                    className="header-logo"
+                />
 
-                <div>
+                <div className="header-brand-text">
                     <h1>DESIMS</h1>
                     <p>Department Examination Management System</p>
+                    <span>University of Gondar | Computer Science</span>
                 </div>
             </div>
 
@@ -45,7 +50,8 @@ function Header() {
                 <NavLink to="/reports" className="nav-link">
                     Reports
                 </NavLink>
-                <NavLink to="/semester-plan-courses">
+
+                <NavLink to="/semester-plan-courses" className="nav-link">
                     Plan Courses
                 </NavLink>
             </nav>

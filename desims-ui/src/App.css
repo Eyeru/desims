@@ -1,275 +1,43 @@
-body {
-    margin: 0;
-    font-family: Arial, Helvetica, sans-serif;
-    background: #f5f7fa;
-}
 
-.header {
-    background: #0f4c81;
-    color: white;
-    padding: 24px;
-}
+/* =========================================================
+   DESIMS — Page-specific styles
+   Global and dashboard styles are maintained in index.css
+   ========================================================= */
 
-.header h1 {
-    margin: 0;
-}
+/* PLACEHOLDER PAGES */
 
-.dashboard {
-    padding: 30px;
-    display: flex;
-    flex-direction: column;
-    gap: 24px;
-}
-
-.card {
-    background: white;
-    padding: 24px;
-    flex: 1 1 180px;
-    min-width: 0;
-    text-align: left;
-    border-radius: 12px;
-    border: 1px solid #e2e8f0;
-    box-shadow: 0 3px 12px rgba(15, 76, 129, 0.06);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 6px 18px rgba(15, 76, 129, 0.12);
-}
-
-.card-label {
-    margin: 0 0 16px;
-    color: #64748b;
-    font-size: 14px;
-    font-weight: 600;
-}
-
-.card-value {
-    margin: 0 0 16px;
-    color: #0f4c81;
-    font-size: 36px;
-    font-weight: 700;
-    line-height: 1.2;
-}
-
-.card-footer {
-    padding-top: 14px;
-    border-top: 1px solid #e8edf3;
-    color: #94a3b8;
-    font-size: 12px;
-}
-
-button {
-    margin-top: 20px;
-    background: #0f4c81;
-    color: white;
-    border: none;
-    padding: 12px 24px;
-    border-radius: 6px;
-    cursor: pointer;
-}
-
-button:hover {
-    background: #09365b;
-}
-
-/* Active examination plan */
-.active-plan-card {
-    background: white;
-    padding: 28px;
-    border-radius: 12px;
-    border: 1px solid #e2e8f0;
-    box-shadow: 0 3px 12px rgba(15, 76, 129, 0.06);
-}
-
-.active-plan-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    gap: 16px;
-    margin-bottom: 24px;
-}
-
-.active-plan-eyebrow {
-    margin: 0 0 8px;
-    color: #0f766e;
-    font-size: 12px;
-    font-weight: 700;
-    letter-spacing: 1px;
-}
-
-.active-plan-header h2 {
-    margin: 0;
-    color: #16324f;
-    font-size: 24px;
-}
-
-.active-plan-description {
-    margin: 8px 0 0;
-    color: #64748b;
-    font-size: 14px;
-}
-
-.active-plan-status {
-    background: #dcfce7;
-    color: #166534;
-    padding: 7px 14px;
-    border-radius: 20px;
-    font-size: 13px;
-    font-weight: 700;
-    white-space: nowrap;
-}
-
-.active-plan-details {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    gap: 16px;
-}
-
-.plan-detail {
-    background: #f8fafc;
-    border: 1px solid #e8edf3;
-    border-radius: 8px;
-    padding: 18px;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-
-.plan-detail-label {
-    color: #64748b;
-    font-size: 13px;
-}
-
-.plan-detail strong {
-    color: #16324f;
-    font-size: 16px;
-}
-
-@media (max-width: 600px) {
-    .dashboard {
-        padding: 16px;
-    }
-
-    .active-plan-card {
-        padding: 20px;
-    }
-
-    .active-plan-header h2 {
-        font-size: 20px;
-    }
-
-    .active-plan-header {
-        flex-wrap: wrap;
-    }
-}
-
-
-.header {
-    background: #0f4c81;
-    color: white;
-    padding: 24px 30px;
-}
-
-.header-brand {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    margin-bottom: 22px;
-}
-
-.header-logo {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 46px;
-    height: 46px;
-    border: 1px solid rgba(255, 255, 255, 0.4);
-    border-radius: 10px;
-    font-size: 24px;
-    font-weight: 700;
-}
-
-.header-brand h1 {
-    margin: 0;
-    font-size: 25px;
-}
-
-.header-brand p {
-    margin: 5px 0 0;
-    color: #dbeafe;
-    font-size: 13px;
-}
-
-.navigation {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-}
-
-.nav-link {
-    color: #e2e8f0;
-    text-decoration: none;
-    padding: 10px 12px;
-    border-radius: 6px;
-    font-size: 14px;
-    transition: background 0.2s ease;
-}
-
-.nav-link:hover,
-.nav-link.active {
-    background: rgba(255, 255, 255, 0.16);
-    color: white;
-}
-
-@media (max-width: 600px) {
-    .header {
-        padding: 20px 16px;
-    }
-
-    .navigation {
-        gap: 4px;
-    }
-
-    .nav-link {
-        padding: 9px;
-        font-size: 13px;
-    }
-}
-
-.placeholder-page{
+.placeholder-page {
     padding: 24px;
     max-width: 1100px;
     margin: 0 auto;
 }
 
-.placeholder-page h1{
-    margin-bottom:  12px;
+.placeholder-page h1 {
+    margin-bottom: 12px;
     font-size: 1.6rem;
 }
 
-.placeholder-page p{
-    color: #666;
+.placeholder-page p {
+    color: var(--text);
     line-height: 1.6;
 }
 
+/* SEMESTER PLAN FORM */
 
-/* Semester plan form */
 .form-container {
     max-width: 760px;
     margin: 24px 0 32px;
     padding: 24px;
-    background-color: #ffffff;
-    border: 1px solid #e2e8f0;
+    background: var(--surface);
+    border: 1px solid var(--border);
     border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
+    box-shadow: var(--shadow);
 }
 
 .form-container h2 {
     margin-top: 0;
     margin-bottom: 24px;
-    color: #1e293b;
+    color: var(--text-h);
     font-size: 1.35rem;
 }
 
@@ -278,7 +46,7 @@ button:hover {
     flex-direction: column;
     gap: 8px;
     margin-bottom: 18px;
-    color: #334155;
+    color: var(--text-h);
     font-size: 0.95rem;
     font-weight: 600;
 }
@@ -288,25 +56,25 @@ button:hover {
     width: 100%;
     box-sizing: border-box;
     padding: 11px 12px;
-    border: 1px solid #cbd5e1;
+    border: 1px solid var(--border);
     border-radius: 7px;
-    background-color: #ffffff;
-    color: #0f172a;
+    background: #ffffff;
+    color: var(--text-h);
     font: inherit;
 }
 
 .form-container input:focus,
 .form-container select:focus {
     outline: none;
-    border-color: #2563eb;
-    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+    border-color: var(--university-blue);
+    box-shadow: 0 0 0 3px rgba(40, 121, 199, 0.12);
 }
 
 .form-container button {
     padding: 12px 20px;
     border: none;
     border-radius: 7px;
-    background-color: #2563eb;
+    background: var(--forest-green);
     color: #ffffff;
     font-size: 0.95rem;
     font-weight: 600;
@@ -314,7 +82,7 @@ button:hover {
 }
 
 .form-container button:hover:not(:disabled) {
-    background-color: #1d4ed8;
+    background: #103b29;
 }
 
 .form-container button:disabled {
@@ -322,21 +90,25 @@ button:hover {
     cursor: not-allowed;
 }
 
+/* SUCCESS AND ERROR MESSAGES */
+
 .success-message {
     margin: 12px 0;
     padding: 12px;
     border-radius: 7px;
-    background-color: #dcfce7;
-    color: #166534;
+    background: #eaf3ed;
+    color: #174c35;
 }
 
 .error-message {
     margin: 12px 0;
     padding: 12px;
     border-radius: 7px;
-    background-color: #fee2e2;
+    background: #fcebea;
     color: #991b1b;
 }
+
+/* RESPONSIVE */
 
 @media (max-width: 600px) {
     .form-container {

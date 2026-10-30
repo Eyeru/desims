@@ -2,13 +2,15 @@ from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
-from academics.models import AcademicYear
 from courses.models import Course
 from rooms.models import Room
 from staff.models import Staff
+from exams.models import Exam
 from scheduling.models import ExamSchedule
 from semester_setup.models import SemesterPlan
-from datetime import date
+from datetime import date, timedelta
+from django.db import transaction
+from academics.models import ExamSession, Holiday, AcademicYear
 
 
 @api_view(["GET"])
@@ -306,4 +308,227 @@ def semester_plan_courses(request, plan_id):
         "program_type": plan.program_type,
         "course_count": len(data),
         "courses": data,
+    })
+
+
+@api_view(["POST"])
+def generate_plan_exams(request, plan_id):
+    plan = get_object_or_404(
+        SemesterPlan.objects.select_related("academic_year"),
+        id=plan_id,
+    )
+
+    courses = Course.objects.filter(
+        year_level=plan.year_level,
+        semester=plan.semester,
+        program_type=plan.program_type,
+    ).order_by("code")
+
+    if not courses.exists():
+        return Response(
+            {
+                "error": (
+                    "No matching courses found. "
+                    "Add or correct the course records first."
+                )
+            },
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    created_count = 0
+    existing_count = 0
+
+    for course in courses:
+        exam, created = Exam.objects.get_or_create(
+            academic_year=plan.academic_year,
+            course=course,
+            semester=plan.semester,
+            defaults={
+                "total_students": plan.student_count,
+            },
+        )
+
+        if created:
+            created_count += 1
+        else:
+            existing_count += 1
+    if not plan.is_generated:
+        plan.is_generated = True
+        plan.save(update_fields=["is_generated"])
+    return Response(
+        {
+            "plan_id": plan.id,
+            "academic_year": plan.academic_year.name,
+            "year_level": plan.year_level,
+            "semester": plan.semester,
+            "program_type": plan.program_type,
+            "created_count": created_count,
+            "existing_count": existing_count,
+            "message": (
+                f"{created_count} exam record(s) created; "
+                f"{existing_count} already existed."
+            ),
+        },
+        status=status.HTTP_200_OK,
+    )
+
+
+@api_view(["POST"])
+def generate_plan_schedule(request, plan_id):
+    plan = get_object_or_404(
+        SemesterPlan.objects.select_related("academic_year"),
+        id=plan_id,
+    )
+
+    # Get all exams belonging to this plan.
+    exams = Exam.objects.filter(
+        academic_year=plan.academic_year,
+        semester=plan.semester,
+        course__year_level=plan.year_level,
+        course__program_type=plan.program_type,
+    ).order_by("course__code")
+
+    if not exams.exists():
+        return Response(
+            {"error": "Generate exam records before scheduling."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    # Do not overwrite existing schedules.
+    existing_schedules = ExamSchedule.objects.filter(plan=plan)
+
+    if existing_schedules.exists():
+        return Response(
+            {
+                "error": (
+                    "This plan already has schedules. "
+                    "Existing schedules were not changed."
+                )
+            },
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    # Find eligible sessions.
+    if plan.session_policy == "MORNING":
+        sessions = ExamSession.objects.filter(name="MORNING")
+    elif plan.session_policy == "AFTERNOON":
+        sessions = ExamSession.objects.filter(name="AFTERNOON")
+    else:
+        sessions = ExamSession.objects.all().order_by("id")
+
+    if not sessions.exists():
+        return Response(
+            {"error": "No suitable exam sessions are configured."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    # Find holidays.
+    holidays = set(
+        Holiday.objects.filter(
+            date__range=(plan.start_date, plan.end_date)
+        ).values_list("date", flat=True)
+    )
+
+    # Find eligible dates.
+    eligible_dates = []
+    current_date = plan.start_date
+
+    while current_date <= plan.end_date:
+        is_weekend = current_date.weekday() >= 5
+        is_holiday = current_date in holidays
+
+        if plan.program_type == "REGULAR":
+            if not is_weekend and not is_holiday:
+                eligible_dates.append(current_date)
+        else:
+            if not is_holiday:
+                eligible_dates.append(current_date)
+
+        current_date += timedelta(days=1)
+
+    # Apply one-day gap between exam dates.
+    selected_dates = eligible_dates[::2]
+
+    if len(selected_dates) < exams.count():
+        return Response(
+            {
+                "error": (
+                    "Not enough eligible dates for all exams. "
+                    "Extend the exam period or review the scheduling rules."
+                )
+            },
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    # Create schedules safely.
+    created_schedules = []
+
+    try:
+        with transaction.atomic():
+            for index, exam in enumerate(exams):
+                session = sessions[index % len(sessions)]
+
+                schedule = ExamSchedule.objects.create(
+                    plan=plan,
+                    exam=exam,
+                    date=selected_dates[index],
+                    session=session,
+                    is_auto=True,
+                    is_final=False,
+                )
+
+                created_schedules.append({
+                    "exam_code": exam.course.code,
+                    "exam_title": exam.course.title,
+                    "date": schedule.date,
+                    "session": schedule.session.name,
+                })
+
+    except Exception as exc:
+        return Response(
+            {"error": f"Schedule generation failed: {str(exc)}"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    return Response(
+        {
+            "plan_id": plan.id,
+            "scheduled_count": len(created_schedules),
+            "schedules": created_schedules,
+            "message": (
+                f"{len(created_schedules)} exam(s) scheduled successfully."
+            ),
+        },
+        status=status.HTTP_200_OK,
+    )
+
+
+@api_view(["GET"])
+def semester_plan_schedule(request, plan_id):
+    plan = get_object_or_404(SemesterPlan, id=plan_id)
+
+    schedules = ExamSchedule.objects.filter(
+        plan=plan
+    ).select_related(
+        "exam__course",
+        "session",
+    ).order_by("date", "session__start_time")
+
+    schedule_data = []
+
+    for schedule in schedules:
+        schedule_data.append({
+            "id": schedule.id,
+            "exam_code": schedule.exam.course.code,
+            "exam_title": schedule.exam.course.title,
+            "date": schedule.date,
+            "session": schedule.session.name,
+            "is_auto": schedule.is_auto,
+            "is_final": schedule.is_final,
+        })
+
+    return Response({
+        "plan_id": plan.id,
+        "scheduled_count": len(schedule_data),
+        "schedules": schedule_data,
     })
