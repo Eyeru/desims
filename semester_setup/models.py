@@ -62,3 +62,20 @@ class SemesterPlan(models.Model):
             f"Year {self.year_level} "
             f"Semester {self.semester}"
         )
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=[
+                    "academic_year",
+                    "year_level",
+                    "semester",
+                    "program_type",
+                ],
+                name="unique_semester_plan",
+            ),
+            models.UniqueConstraint(
+                fields=["is_active"],
+                condition=models.Q(is_active=True),
+                name="only_one_active_semester_plan",
+            ),
+        ]

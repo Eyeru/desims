@@ -23,6 +23,7 @@ def dashboard(request):
 
     if plan:
         active_plan = {
+            "id": plan.id,
             "academic_year": plan.academic_year.name,
             "year_level": plan.year_level,
             "semester": plan.semester,
@@ -244,7 +245,6 @@ def create_semester_plan(request):
         },
         status=status.HTTP_201_CREATED,
     )
-
 
 
 @api_view(["POST"])
