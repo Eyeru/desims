@@ -23,12 +23,16 @@ function Header() {
                     Dashboard
                 </NavLink>
 
-                <NavLink to="/academic-years" className="nav-link">
-                    Academic Years
+                <NavLink to="/semester-plan-courses" className="nav-link">
+                    Plan Courses
                 </NavLink>
 
                 <NavLink to="/semester-plans" className="nav-link">
                     Semester Plans
+                </NavLink>
+
+                <NavLink to="/academic-years" className="nav-link">
+                    Academic Years
                 </NavLink>
 
                 <NavLink to="/courses" className="nav-link">
@@ -49,10 +53,6 @@ function Header() {
 
                 <NavLink to="/reports" className="nav-link">
                     Reports
-                </NavLink>
-
-                <NavLink to="/semester-plan-courses" className="nav-link">
-                    Plan Courses
                 </NavLink>
             </nav>
         </header>
