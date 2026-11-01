@@ -105,6 +105,124 @@ def activate_academic_year(request, year_id):
     })
 
 
+@api_view(["GET", "POST"])
+def course_list(request):
+    if request.method == "POST":
+        data = request.data
+
+        required_fields = [
+            "code",
+            "title",
+            "year_level",
+            "semester",
+            "program_type",
+        ]
+
+        for field in required_fields:
+            if field not in data or data[field] in ("", None):
+                return Response(
+                    {"error": f"{field} is required."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+        code = str(data["code"]).strip().upper()
+        title = str(data["title"]).strip()
+        program_type = data["program_type"]
+
+        if program_type not in ["REGULAR", "EXTENSION"]:
+            return Response(
+                {"error": "Invalid program type."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            year_level = int(data["year_level"])
+            semester = int(data["semester"])
+        except (ValueError, TypeError):
+            return Response(
+                {"error": "Year level and semester must be numbers."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if year_level < 1 or semester not in [1, 2]:
+            return Response(
+                {"error": "Invalid year level or semester."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        course = Course.objects.create(
+            code=code,
+            title=title,
+            year_level=year_level,
+            semester=semester,
+            program_type=program_type,
+            is_department_owned=data.get("is_department_owned", True),
+        )
+
+        return Response(
+            {
+                "id": course.id,
+                "code": course.code,
+                "title": course.title,
+                "year_level": course.year_level,
+                "semester": course.semester,
+                "program_type": course.program_type,
+                "is_department_owned": course.is_department_owned,
+            },
+            status=status.HTTP_201_CREATED,
+        )
+
+    courses = Course.objects.all().order_by(
+        "program_type", "year_level", "semester", "code"
+    )
+
+    data = [
+        {
+            "id": course.id,
+            "code": course.code,
+            "title": course.title,
+            "year_level": course.year_level,
+            "semester": course.semester,
+            "program_type": course.program_type,
+            "is_department_owned": course.is_department_owned,
+        }
+        for course in courses
+    ]
+
+    return Response(data)
+
+
+@api_view(["PUT", "PATCH"])
+def update_course(request, course_id):
+    course = get_object_or_404(Course, id=course_id)
+    data = request.data
+
+    fields = [
+        "code",
+        "title",
+        "year_level",
+        "semester",
+        "program_type",
+        "is_department_owned",
+    ]
+
+    for field in fields:
+        if field in data:
+            setattr(course, field, data[field])
+
+    course.save()
+
+    return Response({
+        "id": course.id,
+        "code": course.code,
+        "title": course.title,
+        "year_level": course.year_level,
+        "semester": course.semester,
+        "program_type": course.program_type,
+        "is_department_owned": course.is_department_owned,
+    })
+
+
 @api_view(["GET"])
 def semester_plan_list(request):
     plans = SemesterPlan.objects.select_related(
