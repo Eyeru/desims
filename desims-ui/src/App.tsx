@@ -5,6 +5,7 @@ import AcademicYears from "./pages/AcademicYears";
 import SemesterPlans from "./pages/SemesterPlans";
 import SemesterPlanCourses from "./pages/SemesterPlanCourses";
 import Courses from "./pages/Courses";
+import Rooms from "./pages/Rooms";
 import "./App.css";
 
 function App() {
@@ -16,8 +17,7 @@ function App() {
             <Route path="/semester-plans" element={
                 <SemesterPlans />} />
             <Route path="/courses" element={<Courses />} />
-            <Route path="/rooms" element={
-                <PlaceholderPage title="Rooms" />} /> 
+            <Route path="/rooms" element={<Rooms />} /> 
             <Route path="/staff" element={
                 <PlaceholderPage title="Staff" />} />
             <Route path="/exam-schedules" element={

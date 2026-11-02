@@ -779,3 +779,215 @@ def semester_plan_schedule(request, plan_id):
         "scheduled_count": len(schedule_data),
         "schedules": schedule_data,
     })
+
+
+def room_response_data(room):
+    return {
+        "id": room.id,
+        "name": room.name,
+        "building": room.building,
+        "physical_capacity": room.physical_capacity,
+        "exam_capacity": room.exam_capacity,
+        "room_type": room.room_type,
+        "is_active": room.is_active,
+        "department": room.department,
+    }
+
+
+@api_view(["GET", "POST"])
+def room_list(request):
+    if request.method == "POST":
+        data = request.data
+
+        required_fields = [
+            "name",
+            "building",
+            "physical_capacity",
+            "exam_capacity",
+            "room_type",
+        ]
+
+        for field in required_fields:
+            if field not in data or data[field] in ("", None):
+                return Response(
+                    {"error": f"{field} is required."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+        name = str(data["name"]).strip()
+        building = str(data["building"]).strip()
+        department = data.get("department")
+
+        if not name or not building:
+            return Response(
+                {"error": "Room name and building cannot be blank."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if department is not None:
+            department = str(department).strip() or None
+
+        room_type = data["room_type"]
+
+        if room_type not in ["CLASSROOM", "HALL"]:
+            return Response(
+                {"error": "Room type must be CLASSROOM or HALL."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            physical_capacity = int(data["physical_capacity"])
+            exam_capacity = int(data["exam_capacity"])
+        except (ValueError, TypeError):
+            return Response(
+                {"error": "Room capacities must be whole numbers."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if physical_capacity < 1 or exam_capacity < 1:
+            return Response(
+                {"error": "Room capacities must be greater than zero."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if exam_capacity > physical_capacity:
+            return Response(
+                {"error": "Exam capacity cannot exceed physical capacity."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        is_active = data.get("is_active", True)
+
+        if not isinstance(is_active, bool):
+            return Response(
+                {"error": "Room active status must be true or false."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        room = Room.objects.create(
+            name=name,
+            building=building,
+            physical_capacity=physical_capacity,
+            exam_capacity=exam_capacity,
+            room_type=room_type,
+            is_active=is_active,
+            department=department,
+        )
+
+        return Response(
+            room_response_data(room),
+            status=status.HTTP_201_CREATED,
+        )
+
+    rooms = Room.objects.all().order_by("building", "name")
+
+    return Response([
+        room_response_data(room)
+        for room in rooms
+    ])
+
+
+@api_view(["PATCH"])
+def update_room(request, room_id):
+    room = get_object_or_404(Room, id=room_id)
+    data = request.data
+
+    allowed_fields = [
+        "name",
+        "building",
+        "physical_capacity",
+        "exam_capacity",
+        "room_type",
+        "is_active",
+        "department",
+    ]
+
+    for field in data:
+        if field not in allowed_fields:
+            return Response(
+                {"error": f"Invalid field: {field}."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+    if not data:
+        return Response(
+            {"error": "No update data provided."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    updated = {
+        "name": room.name,
+        "building": room.building,
+        "physical_capacity": room.physical_capacity,
+        "exam_capacity": room.exam_capacity,
+        "room_type": room.room_type,
+        "is_active": room.is_active,
+        "department": room.department,
+    }
+
+    if "name" in data:
+        updated["name"] = str(data["name"]).strip()
+
+    if "building" in data:
+        updated["building"] = str(data["building"]).strip()
+
+    if not updated["name"] or not updated["building"]:
+        return Response(
+            {"error": "Room name and building cannot be blank."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    for field in ["physical_capacity", "exam_capacity"]:
+        if field in data:
+            try:
+                updated[field] = int(data[field])
+            except (ValueError, TypeError):
+                return Response(
+                    {"error": f"{field} must be a whole number."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+    if updated["physical_capacity"] < 1 or updated["exam_capacity"] < 1:
+        return Response(
+            {"error": "Room capacities must be greater than zero."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    if updated["exam_capacity"] > updated["physical_capacity"]:
+        return Response(
+            {"error": "Exam capacity cannot exceed physical capacity."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    if "room_type" in data:
+        updated["room_type"] = data["room_type"]
+
+    if updated["room_type"] not in ["CLASSROOM", "HALL"]:
+        return Response(
+            {"error": "Room type must be CLASSROOM or HALL."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    if "is_active" in data:
+        updated["is_active"] = data["is_active"]
+
+    if not isinstance(updated["is_active"], bool):
+        return Response(
+            {"error": "Room active status must be true or false."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    if "department" in data:
+        department = data["department"]
+        updated["department"] = (
+            str(department).strip() or None
+            if department is not None
+            else None
+        )
+
+    for field, value in updated.items():
+        setattr(room, field, value)
+
+    room.save()
+
+    return Response(room_response_data(room))

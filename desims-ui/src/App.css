@@ -265,3 +265,24 @@
     background: var(--forest-green);
     color: white;
 }
+
+/* ROOMS PAGE */
+
+.room-form-actions {
+    grid-column: 1 / -1;
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.table-container button.room-cancel-button,
+.room-cancel-button {
+    background: #666;
+}
+
+@media (max-width: 700px) {
+    .room-form-actions {
+        grid-column: 1;
+        flex-wrap: wrap;
+    }
+}
