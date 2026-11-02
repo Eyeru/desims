@@ -11,6 +11,11 @@ from semester_setup.models import SemesterPlan
 from datetime import date, timedelta
 from django.db import transaction, IntegrityError
 from academics.models import ExamSession, Holiday, AcademicYear
+from allocations.models import ExamRoomAllocation
+from allocations.services import (
+    allocate_exam_rooms,
+    RoomAllocationError,
+)
 
 
 @api_view(["GET"])
@@ -971,6 +976,26 @@ def update_room(request, room_id):
     if "is_active" in data:
         updated["is_active"] = data["is_active"]
 
+        # Prevent deactivation when future or today's exams use this room.
+        if room.is_active and updated["is_active"] is False:
+            has_upcoming_exams = ExamRoomAllocation.objects.filter(
+                room=room,
+                exam_schedule__isnull=False,
+                exam_schedule__date__gte=date.today(),
+            ).exists()
+
+            if has_upcoming_exams:
+                return Response(
+                    {
+                        "error": (
+                            "This room cannot be deactivated because it "
+                            "is assigned to an upcoming exam. "
+                            "Reassign the exam first."
+                        )
+                    },
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
     if not isinstance(updated["is_active"], bool):
         return Response(
             {"error": "Room active status must be true or false."},
@@ -991,3 +1016,28 @@ def update_room(request, room_id):
     room.save()
 
     return Response(room_response_data(room))
+
+
+@api_view(["POST"])
+def allocate_exam_rooms_view(request, schedule_id):
+    exam_schedule = get_object_or_404(
+        ExamSchedule,
+        id=schedule_id,
+    )
+
+    try:
+        result = allocate_exam_rooms(exam_schedule)
+
+        return Response(
+            {
+                "message": "Rooms allocated successfully.",
+                "data": result,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+    except RoomAllocationError as error:
+        return Response(
+            {"error": str(error)},
+            status=status.HTTP_400_BAD_REQUEST,
+        )

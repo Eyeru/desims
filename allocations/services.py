@@ -1,99 +1,220 @@
+from itertools import combinations
+
+from django.db import transaction
+
 from rooms.models import Room
-from .models import ExamRoomAllocation
+from allocations.models import ExamRoomAllocation
 
 
-def get_available_rooms(date, session):
-
-    occupied = ExamRoomAllocation.objects.filter(
-        exam_schedule__date=date,
-        exam_schedule__session=session
-    ).values_list("room_id", flat=True)
-
-    return Room.objects.filter(
-        is_active=True
-    ).exclude(
-        id__in=occupied
-    )
+class RoomAllocationError(Exception):
+    """Raised when an exam cannot be allocated to available rooms."""
 
 
-def split_rooms(rooms):
+def _find_best_combination(rooms, total_students):
+    """
+    Find the minimum number of rooms that can accommodate all students.
 
-    classrooms = rooms.filter(
-        room_type=Room.CLASSROOM
-    ).order_by("-exam_capacity")
+    If multiple combinations use the same number of rooms,
+    prefer the combination with the least unused capacity.
+    """
 
-    halls = rooms.filter(
-        room_type=Room.HALL
-    ).order_by("-exam_capacity")
+    for room_count in range(1, len(rooms) + 1):
+        valid_combinations = []
 
-    return classrooms, halls
-
-
-def allocate_exam(schedule):
-
-    if not schedule.exam.semesterplan_set.filter(is_active=True).exists():
-        return
-
-    students = schedule.exam.total_students
-
-    available_rooms = get_available_rooms(
-        schedule.date,
-        schedule.session
-    )
-
-    classrooms, halls = split_rooms(available_rooms)
-
-    allocations = []
-
-    # STEP 1: use classrooms first
-    for room in classrooms:
-
-        if students <= 0:
-            break
-
-        assigned = min(room.exam_capacity, students)
-
-        allocations.append(
-            ExamRoomAllocation.objects.create(
-                exam_schedule=schedule,
-                room=room,
-                allocated_students=assigned
+        for combination in combinations(rooms, room_count):
+            total_capacity = sum(
+                room.exam_capacity for room in combination
             )
-        )
 
-        students -= assigned
+            if total_capacity >= total_students:
+                unused_capacity = total_capacity - total_students
 
-    # STEP 2: halls only if needed
-    if students > 0:
+                valid_combinations.append(
+                    (unused_capacity, combination)
+                )
 
-        for hall in halls:
-
-            if students <= 0:
-                break
-
-            assigned = min(hall.exam_capacity, students)
-
-            allocations.append(
-                ExamRoomAllocation.objects.create(
-                    exam_schedule=schedule,
-                    room=hall,
-                    allocated_students=assigned
+        if valid_combinations:
+            valid_combinations.sort(
+                key=lambda item: (
+                    item[0],
+                    tuple(
+                        (room.building, room.name, room.id)
+                        for room in item[1]
+                    ),
                 )
             )
 
-            students -= assigned
+            return valid_combinations[0][1]
 
-    return allocations
+    return None
 
 
-def allocate_all_exams(exam_schedules):
+def _select_rooms(available_rooms, total_students):
+    """
+    Apply the room selection priority:
 
-    results = []
+    1. Classrooms only.
+    2. Halls only.
+    3. Mixed classrooms and halls.
+    """
 
-    for schedule in exam_schedules:
+    classrooms = [
+        room for room in available_rooms
+        if room.room_type == Room.CLASSROOM
+    ]
 
-        allocations = allocate_exam(schedule)
+    halls = [
+        room for room in available_rooms
+        if room.room_type == Room.HALL
+    ]
 
-        results.append((schedule, allocations))
+    classrooms.sort(
+        key=lambda room: (-room.exam_capacity, room.building, room.name)
+    )
 
-    return results
+    halls.sort(
+        key=lambda room: (-room.exam_capacity, room.building, room.name)
+    )
+
+    # Stage 1: Classrooms only
+    selected = _find_best_combination(classrooms, total_students)
+
+    if selected:
+        return selected, "CLASSROOMS"
+
+    # Stage 2: Halls only
+    selected = _find_best_combination(halls, total_students)
+
+    if selected:
+        return selected, "HALLS"
+
+    # Stage 3: Mixed classrooms and halls
+    mixed_rooms = classrooms + halls
+
+    selected = _find_best_combination(mixed_rooms, total_students)
+
+    if selected and any(
+        room.room_type == Room.CLASSROOM for room in selected
+    ) and any(
+        room.room_type == Room.HALL for room in selected
+    ):
+        return selected, "MIXED"
+
+    return None, None
+
+
+@transaction.atomic
+def allocate_exam_rooms(exam_schedule):
+    """
+    Allocate rooms for one scheduled exam.
+
+    Returns:
+        A dictionary containing allocation details.
+
+    Raises:
+        RoomAllocationError if allocation is impossible or
+        the exam already has allocations.
+    """
+
+    # Protect existing allocations from accidental replacement.
+    if exam_schedule.room_allocations.exists():
+        raise RoomAllocationError(
+            "This exam already has room allocations. "
+            "Existing allocations were not changed."
+        )
+
+    total_students = exam_schedule.exam.total_students
+
+    if total_students <= 0:
+        raise RoomAllocationError(
+            "Cannot allocate rooms because the exam has no students."
+        )
+
+    # Find rooms already occupied by another exam on the same
+    # date and in the same session.
+    occupied_room_ids = ExamRoomAllocation.objects.filter(
+        exam_schedule__date=exam_schedule.date,
+        exam_schedule__session=exam_schedule.session,
+    ).exclude(
+        exam_schedule=exam_schedule
+    ).values_list(
+        "room_id", flat=True
+    )
+
+    # Only active, unoccupied rooms can be allocated.
+    available_rooms = list(
+        Room.objects.filter(
+            is_active=True
+        ).exclude(
+            id__in=occupied_room_ids
+        )
+    )
+
+    # Apply the agreed classroom/hall priority.
+    selected_rooms, allocation_type = _select_rooms(
+        available_rooms,
+        total_students,
+    )
+
+    if not selected_rooms:
+        raise RoomAllocationError(
+            f"Allocation failed for {total_students} students. "
+            "Available classrooms, halls, and mixed combinations "
+            "cannot accommodate all students. No allocations were made."
+        )
+
+    # Distribute all students without exceeding any room's
+    # exam_capacity.
+    remaining_students = total_students
+    allocations_to_create = []
+
+    for room in sorted(
+        selected_rooms,
+        key=lambda room: (
+            -room.exam_capacity,
+            room.building,
+            room.name,
+        ),
+    ):
+        allocated_students = min(
+            room.exam_capacity,
+            remaining_students,
+        )
+
+        if allocated_students > 0:
+            allocations_to_create.append(
+                ExamRoomAllocation(
+                    exam_schedule=exam_schedule,
+                    room=room,
+                    allocated_students=allocated_students,
+                    is_auto=True,
+                )
+            )
+
+            remaining_students -= allocated_students
+
+    # Final safety check before writing to the database.
+    if remaining_students != 0:
+        raise RoomAllocationError(
+            "Allocation validation failed. No allocations were made."
+        )
+
+    # Create all allocations within the database transaction.
+    ExamRoomAllocation.objects.bulk_create(allocations_to_create)
+
+    return {
+        "exam_schedule_id": exam_schedule.id,
+        "total_students": total_students,
+        "allocation_type": allocation_type,
+        "rooms_used": len(allocations_to_create),
+        "allocations": [
+            {
+                "room_id": allocation.room.id,
+                "room_name": allocation.room.name,
+                "room_type": allocation.room.room_type,
+                "exam_capacity": allocation.room.exam_capacity,
+                "allocated_students": allocation.allocated_students,
+            }
+            for allocation in allocations_to_create
+        ],
+    }
