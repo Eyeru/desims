@@ -239,3 +239,29 @@
         grid-column: 1;
     }
 }
+
+/* Courses page filters */
+
+.course-filters {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 12px;
+    margin: 20px 0;
+}
+
+.course-filters input,
+.course-filters select {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+}
+
+.course-filters button {
+    padding: 10px 14px;
+    border: none;
+    border-radius: 6px;
+    background: var(--forest-green);
+    color: white;
+}

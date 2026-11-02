@@ -4,6 +4,7 @@ import PlaceholderPage from "./pages/PlaceholderPage";
 import AcademicYears from "./pages/AcademicYears";
 import SemesterPlans from "./pages/SemesterPlans";
 import SemesterPlanCourses from "./pages/SemesterPlanCourses";
+import Courses from "./pages/Courses";
 import "./App.css";
 
 function App() {
@@ -14,8 +15,7 @@ function App() {
                 <AcademicYears />} />
             <Route path="/semester-plans" element={
                 <SemesterPlans />} />
-            <Route path="/courses" element={
-                <PlaceholderPage title="Courses" />} />
+            <Route path="/courses" element={<Courses />} />
             <Route path="/rooms" element={
                 <PlaceholderPage title="Rooms" />} /> 
             <Route path="/staff" element={

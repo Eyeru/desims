@@ -9,7 +9,7 @@ from exams.models import Exam
 from scheduling.models import ExamSchedule
 from semester_setup.models import SemesterPlan
 from datetime import date, timedelta
-from django.db import transaction
+from django.db import transaction, IntegrityError
 from academics.models import ExamSession, Holiday, AcademicYear
 
 
@@ -129,6 +129,12 @@ def course_list(request):
         title = str(data["title"]).strip()
         program_type = data["program_type"]
 
+        if not code or not title:
+            return Response(
+                {"error": "Course code and title cannot be blank."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         if program_type not in ["REGULAR", "EXTENSION"]:
             return Response(
                 {"error": "Invalid program type."},
@@ -150,14 +156,33 @@ def course_list(request):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        course = Course.objects.create(
-            code=code,
-            title=title,
-            year_level=year_level,
-            semester=semester,
-            program_type=program_type,
-            is_department_owned=data.get("is_department_owned", True),
-        )
+        is_department_owned = data.get("is_department_owned", True)
+
+        if not isinstance(is_department_owned, bool):
+            return Response(
+                {"error": "Course ownership must be true or false."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            course = Course.objects.create(
+                code=code,
+                title=title,
+                year_level=year_level,
+                semester=semester,
+                program_type=program_type,
+                is_department_owned=is_department_owned,
+            )
+        except IntegrityError:
+            return Response(
+                {
+                    "error": (
+                        "A course with this code, program type, "
+                        "year level, and semester already exists."
+                    )
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         return Response(
             {
@@ -176,7 +201,7 @@ def course_list(request):
         "program_type", "year_level", "semester", "code"
     )
 
-    data = [
+    response_data = [
         {
             "id": course.id,
             "code": course.code,
@@ -189,7 +214,7 @@ def course_list(request):
         for course in courses
     ]
 
-    return Response(data)
+    return Response(response_data)
 
 
 @api_view(["PUT", "PATCH"])
@@ -197,7 +222,7 @@ def update_course(request, course_id):
     course = get_object_or_404(Course, id=course_id)
     data = request.data
 
-    fields = [
+    allowed_fields = [
         "code",
         "title",
         "year_level",
@@ -206,21 +231,125 @@ def update_course(request, course_id):
         "is_department_owned",
     ]
 
-    for field in fields:
-        if field in data:
-            setattr(course, field, data[field])
+    for field in data:
+        if field not in allowed_fields:
+            return Response(
+                {"error": f"Invalid field: {field}."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
-    course.save()
+    if request.method == "PUT":
+        required_fields = [
+            "code",
+            "title",
+            "year_level",
+            "semester",
+            "program_type",
+        ]
 
-    return Response({
-        "id": course.id,
+        for field in required_fields:
+            if field not in data or data[field] in ("", None):
+                return Response(
+                    {"error": f"{field} is required for a PUT request."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+    updated_values = {
         "code": course.code,
         "title": course.title,
         "year_level": course.year_level,
         "semester": course.semester,
         "program_type": course.program_type,
         "is_department_owned": course.is_department_owned,
-    })
+    }
+
+    if "code" in data:
+        updated_values["code"] = str(data["code"]).strip().upper()
+
+    if "title" in data:
+        updated_values["title"] = str(data["title"]).strip()
+
+    if not updated_values["code"] or not updated_values["title"]:
+        return Response(
+            {"error": "Course code and title cannot be blank."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    if "year_level" in data:
+        try:
+            updated_values["year_level"] = int(data["year_level"])
+        except (ValueError, TypeError):
+            return Response(
+                {"error": "Year level must be a number."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+    if "semester" in data:
+        try:
+            updated_values["semester"] = int(data["semester"])
+        except (ValueError, TypeError):
+            return Response(
+                {"error": "Semester must be a number."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+    if updated_values["year_level"] < 1:
+        return Response(
+            {"error": "Year level must be at least 1."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    if updated_values["semester"] not in [1, 2]:
+        return Response(
+            {"error": "Semester must be 1 or 2."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    if "program_type" in data:
+        updated_values["program_type"] = data["program_type"]
+
+    if updated_values["program_type"] not in ["REGULAR", "EXTENSION"]:
+        return Response(
+            {"error": "Invalid program type."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    if "is_department_owned" in data:
+        updated_values["is_department_owned"] = data["is_department_owned"]
+
+    if not isinstance(updated_values["is_department_owned"], bool):
+        return Response(
+            {"error": "Course ownership must be true or false."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    for field, value in updated_values.items():
+        setattr(course, field, value)
+
+    try:
+        course.save()
+    except IntegrityError:
+        return Response(
+            {
+                "error": (
+                    "Another course already has this code, program type, "
+                    "year level, and semester."
+                )
+            },
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    return Response(
+        {
+            "id": course.id,
+            "code": course.code,
+            "title": course.title,
+            "year_level": course.year_level,
+            "semester": course.semester,
+            "program_type": course.program_type,
+            "is_department_owned": course.is_department_owned,
+        }
+    )
 
 
 @api_view(["GET"])
