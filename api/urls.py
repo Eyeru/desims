@@ -34,5 +34,9 @@ urlpatterns = [
         "exam-schedules/<int:schedule_id>/allocate-rooms/",
         views.allocate_exam_rooms_view,
     ),
+    path(
+        "semester-plans/<int:plan_id>/allocate-rooms/",
+        views.allocate_plan_rooms_view,
+    ),
 
 ]

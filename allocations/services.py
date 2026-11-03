@@ -144,7 +144,8 @@ def allocate_exam_rooms(exam_schedule):
     # Only active, unoccupied rooms can be allocated.
     available_rooms = list(
         Room.objects.filter(
-            is_active=True
+            is_active=True,
+            exam_capacity__gt=0,
         ).exclude(
             id__in=occupied_room_ids
         )
@@ -218,3 +219,74 @@ def allocate_exam_rooms(exam_schedule):
             for allocation in allocations_to_create
         ],
     }
+
+
+def allocate_plan_rooms(plan_id):
+    """
+    Allocate rooms for all scheduled exams in a semester plan.
+
+    Exams are processed by date, then session ID.
+    Existing allocations are preserved and skipped.
+    An allocation failure for one exam does not stop the batch.
+    """
+
+    from scheduling.models import ExamSchedule
+
+    schedules = ExamSchedule.objects.filter(
+        plan_id=plan_id
+    ).select_related(
+        "exam",
+        "session",
+    ).order_by(
+        "date",
+        "session_id",
+        "id",
+    )
+
+    results = {
+        "plan_id": plan_id,
+        "total_exams": schedules.count(),
+        "successful": [],
+        "skipped": [],
+        "failed": [],
+    }
+
+    for schedule in schedules:
+
+        # Preserve existing allocations.
+        if schedule.room_allocations.exists():
+            results["skipped"].append({
+                "schedule_id": schedule.id,
+                "exam_code": str(schedule.exam),
+                "reason": "Exam already has room allocations.",
+            })
+            continue
+
+        try:
+            allocation_result = allocate_exam_rooms(schedule)
+
+            results["successful"].append({
+                "schedule_id": schedule.id,
+                "exam_code": str(schedule.exam),
+                "date": str(schedule.date),
+                "session": str(schedule.session),
+                "data": allocation_result,
+            })
+
+        except RoomAllocationError as error:
+            results["failed"].append({
+                "schedule_id": schedule.id,
+                "exam_code": str(schedule.exam),
+                "date": str(schedule.date),
+                "session": str(schedule.session),
+                "reason": str(error),
+            })
+
+    results["summary"] = {
+        "total": results["total_exams"],
+        "successful": len(results["successful"]),
+        "skipped": len(results["skipped"]),
+        "failed": len(results["failed"]),
+    }
+
+    return results

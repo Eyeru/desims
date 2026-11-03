@@ -14,6 +14,7 @@ from academics.models import ExamSession, Holiday, AcademicYear
 from allocations.models import ExamRoomAllocation
 from allocations.services import (
     allocate_exam_rooms,
+    allocate_plan_rooms,
     RoomAllocationError,
 )
 
@@ -1041,3 +1042,21 @@ def allocate_exam_rooms_view(request, schedule_id):
             {"error": str(error)},
             status=status.HTTP_400_BAD_REQUEST,
         )
+
+
+@api_view(["POST"])
+def allocate_plan_rooms_view(request, plan_id):
+    plan = get_object_or_404(
+        SemesterPlan,
+        id=plan_id,
+    )
+
+    result = allocate_plan_rooms(plan.id)
+
+    return Response(
+        {
+            "message": "Batch room allocation completed.",
+            "data": result,
+        },
+        status=status.HTTP_200_OK,
+    )
