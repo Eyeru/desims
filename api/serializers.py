@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from semester_setup.models import SemesterPlan
 from scheduling.models import ExamSchedule
+from staff.models import Staff
 
 
 class SemesterPlanSerializer(serializers.ModelSerializer):
@@ -10,7 +11,8 @@ class SemesterPlanSerializer(serializers.ModelSerializer):
 
 
 class ExamScheduleSerializer(serializers.ModelSerializer):
-    exam_course = serializers.CharField(source="exam.course.name", read_only=True)
+    exam_course = serializers.CharField(source="exam.course.name", 
+                                        read_only=True)
 
     class Meta:
         model = ExamSchedule
@@ -22,3 +24,9 @@ class ExamScheduleSerializer(serializers.ModelSerializer):
             "session",
             "plan",
         ]
+
+
+class StaffSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Staff
+        fields = "__all__"

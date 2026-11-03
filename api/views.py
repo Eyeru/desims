@@ -10,6 +10,7 @@ from scheduling.models import ExamSchedule
 from semester_setup.models import SemesterPlan
 from datetime import date, timedelta
 from django.db import transaction, IntegrityError
+from api.serializers import StaffSerializer
 from academics.models import ExamSession, Holiday, AcademicYear
 from allocations.models import ExamRoomAllocation
 from allocations.services import (
@@ -1059,4 +1060,46 @@ def allocate_plan_rooms_view(request, plan_id):
             "data": result,
         },
         status=status.HTTP_200_OK,
+    )
+
+
+@api_view(["GET", "POST"])
+def staff_list(request):
+    if request.method == "GET":
+        staff_members = Staff.objects.all().order_by("first_name", "last_name")
+        serializer = StaffSerializer(staff_members, many=True)
+        return Response(serializer.data)
+
+    serializer = StaffSerializer(data=request.data)
+
+    if serializer.is_valid():
+        serializer.save()
+        return Response(
+            serializer.data,
+            status=status.HTTP_201_CREATED,
+        )
+
+    return Response(
+        serializer.errors,
+        status=status.HTTP_400_BAD_REQUEST,
+    )
+
+
+@api_view(["PATCH"])
+def update_staff(request, staff_id):
+    staff_member = get_object_or_404(Staff, id=staff_id)
+
+    serializer = StaffSerializer(
+        staff_member,
+        data=request.data,
+        partial=True,
+    )
+
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data)
+
+    return Response(
+        serializer.errors,
+        status=status.HTTP_400_BAD_REQUEST,
     )
