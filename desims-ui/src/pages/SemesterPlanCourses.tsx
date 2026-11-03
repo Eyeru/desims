@@ -18,6 +18,9 @@ function SemesterPlanCourses() {
     const [scheduleMessage, setScheduleMessage] = useState("");
     const [scheduleResult, setScheduleResult] = useState<any>(null);
     const [error, setError] = useState("");
+    const [allocatingRooms, setAllocatingRooms] = useState(false);
+    const [allocationResult, setAllocationResult] = useState<any>(null);
+    const [allocationMessage, setAllocationMessage] = useState("");
 
     const generateExams = async () => {
         if (!selectedPlanId || !result || result.course_count === 0) {
@@ -88,6 +91,43 @@ function SemesterPlanCourses() {
             }
         };
 
+    const allocateRooms = async () => {
+        if (!selectedPlanId || !scheduleResult) {
+            return;
+        }
+
+        try {
+            setAllocatingRooms(true);
+            setError("");
+            setAllocationMessage("");
+            setAllocationResult(null);
+
+            const response = await API.post(
+                `semester-plans/${selectedPlanId}/allocate-rooms/`,
+                {}
+            );
+
+            setAllocationResult(response.data.data);
+            setAllocationMessage(response.data.message);
+        } catch (err: unknown) {
+            if (
+                typeof err === "object" &&
+                err !== null &&
+                "response" in err
+            ) {
+                setError(
+                    "Room allocation failed. Check the server response."
+                );
+            } else {
+                setError(
+                    "Could not connect to the server. Check that Django is running."
+                );
+            }
+        } finally {
+            setAllocatingRooms(false);
+        }
+    };
+
     useEffect(() => {
         async function loadPlans() {
             try {
@@ -119,6 +159,8 @@ function SemesterPlanCourses() {
             setResult(null);
             setScheduleResult(null);
             setScheduleMessage("");
+            setAllocationResult(null);
+            setAllocationMessage("");
             return;
         }
 
@@ -260,6 +302,25 @@ function SemesterPlanCourses() {
                                 ? "Generating Schedule..."
                                 : "Generate Schedule"}
                         </button>
+
+                        <button
+                            type="button"
+                            onClick={allocateRooms}
+                            disabled={
+                                allocatingRooms ||
+                                generatingSchedule ||
+                                generatingExams ||
+                                loadingCourses ||
+                                !scheduleResult
+                            }
+                        >
+                            {allocatingRooms
+                                ? "Allocating Rooms..."
+                                : "Allocate All Rooms"}
+                        </button>
+
+
+
                         {generationMessage && (
                             <p className="success-message">
                                 {generationMessage}
@@ -271,6 +332,149 @@ function SemesterPlanCourses() {
                                 {scheduleMessage}
                             </p>
                         )}
+                        {allocationMessage && (
+                            <p className="success-message">
+                                {allocationMessage}
+                            </p>
+                        )}
+                        {allocationMessage && (
+                            <p className="success-message">
+                                {allocationMessage}
+                            </p>
+                        )}
+
+                        {allocationResult && (
+                            <div className="table-container">
+                                <h3>Room Allocation Report</h3>
+
+                                {/* Allocation Summary */}
+                                <div>
+                                    <h4>Summary</h4>
+
+                                    <p>Total Exams: {allocationResult.summary.total}</p>
+
+                                    <p>
+                                        Successfully Allocated:{" "}
+                                        {allocationResult.summary.successful}
+                                    </p>
+
+                                    <p>
+                                        Skipped: {allocationResult.summary.skipped}
+                                    </p>
+
+                                    <p>
+                                        Failed: {allocationResult.summary.failed}
+                                    </p>
+                                </div>
+
+                                {/* Successful Allocations */}
+                                {allocationResult.successful.length > 0 && (
+                                    <div>
+                                        <h4>Successful Allocations</h4>
+
+                                        {allocationResult.successful.map((exam: any) => (
+                                            <div
+                                                key={exam.schedule_id}
+                                                className="table-container"
+                                            >
+                                                <h4>
+                                                    {exam.exam_code} — {exam.date} (
+                                                    {exam.session})
+                                                </h4>
+
+                                                <p>
+                                                    Students: {exam.data.total_students} |{" "}
+                                                    Rooms Used: {exam.data.rooms_used} |{" "}
+                                                    Allocation Type: {exam.data.allocation_type}
+                                                </p>
+
+                                                <table>
+                                                    <thead>
+                                                        <tr>
+                                                            <th>Room</th>
+                                                            <th>Room Type</th>
+                                                            <th>Exam Capacity</th>
+                                                            <th>Allocated Students</th>
+                                                        </tr>
+                                                    </thead>
+
+                                                    <tbody>
+                                                        {exam.data.allocations.map(
+                                                            (allocation: any) => (
+                                                                <tr key={allocation.room_id}>
+                                                                    <td>{allocation.room_name}</td>
+                                                                    <td>{allocation.room_type}</td>
+                                                                    <td>{allocation.exam_capacity}</td>
+                                                                    <td>
+                                                                        {allocation.allocated_students}
+                                                                    </td>
+                                                                </tr>
+                                                            )
+                                                        )}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+
+                                {/* Skipped Exams */}
+                                {allocationResult.skipped.length > 0 && (
+                                    <div>
+                                        <h4>Skipped Exams</h4>
+
+                                        <table>
+                                            <thead>
+                                                <tr>
+                                                    <th>Exam</th>
+                                                    <th>Reason</th>
+                                                </tr>
+                                            </thead>
+
+                                            <tbody>
+                                                {allocationResult.skipped.map((exam: any) => (
+                                                    <tr key={exam.schedule_id}>
+                                                        <td>{exam.exam_code}</td>
+                                                        <td>{exam.reason}</td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                )}
+
+                                {/* Failed Allocations */}
+                                {allocationResult.failed.length > 0 && (
+                                    <div>
+                                        <h4>Failed Allocations</h4>
+
+                                        <table>
+                                            <thead>
+                                                <tr>
+                                                    <th>Exam</th>
+                                                    <th>Date</th>
+                                                    <th>Session</th>
+                                                    <th>Reason</th>
+                                                </tr>
+                                            </thead>
+
+                                            <tbody>
+                                                {allocationResult.failed.map((exam: any) => (
+                                                    <tr key={exam.schedule_id}>
+                                                        <td>{exam.exam_code}</td>
+                                                        <td>{exam.date}</td>
+                                                        <td>{exam.session}</td>
+                                                        <td>{exam.reason}</td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+
 
                         {scheduleResult && (
                             <div className="table-container">
