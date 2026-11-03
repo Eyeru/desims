@@ -57,32 +57,6 @@ Key Features
 - Dashboard with examination statistics.
 - Examination reports.
 
-Project Structure
-
-DESIMS/
-├── backend/
-│   ├── academics/
-│   ├── semester_setup/
-│   ├── courses/
-│   ├── staff/
-│   ├── rooms/
-│   ├── exams/
-│   ├── scheduling/
-│   ├── allocations/
-│   ├── invigilation/
-│   ├── dashboard/
-│   ├── conflicts/
-│   └── reports/
-│
-└── frontend/
-    ├── src/
-    │   ├── components/
-    │   ├── pages/
-    │   ├── services/
-    │   └── ...
-    └── ...
-
-Note: The directory structure is illustrative; adjust it to match the actual repository layout.
 
 Development Status
 
