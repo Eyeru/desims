@@ -4,6 +4,57 @@ import API from "../services/api";
 import type { SemesterPlan } from "../types/SemesterPlan";
 import type { SemesterPlanCoursesResponse } from "../types/SemesterPlanCourses";
 import Header from "../components/Header";
+type InvigilationAssignment = {
+    id: number;
+    staff_id: number;
+    staff_name: string;
+    is_auto: boolean;
+};
+
+type InvigilationSchedule = {
+    schedule_id: number;
+    exam_code: string;
+    exam_title: string;
+    date: string;
+    session: string;
+    student_count: number;
+    rooms: {
+        id: number;
+        name: string;
+        building: string;
+        room_type: string;
+        allocated_students: number;
+    }[];
+    required_invigilators: number;
+    assigned_invigilators: InvigilationAssignment[];
+    assigned_count: number;
+    remaining_count: number;
+};
+
+type InvigilationResponse = {
+    plan_id: number;
+    program_type: string;
+    is_active: boolean;
+    scheduled_count: number;
+    schedules: InvigilationSchedule[];
+};
+
+type InvigilationBatchResponse = {
+    plan_id: number;
+    summary: {
+        success_count: number;
+        skipped_count: number;
+        failed_count: number;
+    };
+    results: {
+        schedule_id: number;
+        exam_code: string;
+        status: "success" | "skipped" | "failed";
+        message: string;
+        assignments: InvigilationAssignment[];
+    }[];
+    message: string;
+};
 
 function SemesterPlanCourses() {
     const [plans, setPlans] = useState<SemesterPlan[]>([]);
@@ -21,6 +72,17 @@ function SemesterPlanCourses() {
     const [allocatingRooms, setAllocatingRooms] = useState(false);
     const [allocationResult, setAllocationResult] = useState<any>(null);
     const [allocationMessage, setAllocationMessage] = useState("");
+    const [invigilationData, setInvigilationData] =
+    useState<InvigilationResponse | null>(null);
+
+    const [assigningAllInvigilators, setAssigningAllInvigilators] =
+        useState(false);
+
+    const [invigilationMessage, setInvigilationMessage] =
+        useState("");
+
+    const [invigilationResult, setInvigilationResult] =
+        useState<InvigilationBatchResponse | null>(null);
 
     const generateExams = async () => {
         if (!selectedPlanId || !result || result.course_count === 0) {
@@ -128,6 +190,49 @@ function SemesterPlanCourses() {
         }
     };
 
+    const loadInvigilation = async () => {
+        if (!selectedPlanId) {
+            return;
+        }
+
+        try {
+            const response = await API.get<InvigilationResponse>(
+                `semester-plans/${selectedPlanId}/invigilation/`
+            );
+
+            setInvigilationData(response.data);
+        } catch {
+            setError("Could not load invigilation data.");
+        }
+    };
+
+    const assignAllInvigilators = async () => {
+        if (!selectedPlanId || !invigilationData) {
+            return;
+        }
+
+        try {
+            setAssigningAllInvigilators(true);
+            setError("");
+            setInvigilationMessage("");
+            setInvigilationResult(null);
+
+            const response = await API.post<InvigilationBatchResponse>(
+                `semester-plans/${selectedPlanId}/assign-invigilators/`,
+                {}
+            );
+
+            setInvigilationResult(response.data);
+            setInvigilationMessage(response.data.message);
+
+            await loadInvigilation();
+        } catch {
+            setError("Batch invigilation assignment failed.");
+        } finally {
+            setAssigningAllInvigilators(false);
+        }
+    };
+
     useEffect(() => {
         async function loadPlans() {
             try {
@@ -161,6 +266,9 @@ function SemesterPlanCourses() {
             setScheduleMessage("");
             setAllocationResult(null);
             setAllocationMessage("");
+            setInvigilationData(null);
+            setInvigilationMessage("");
+            setInvigilationResult(null);
             return;
         }
 
@@ -188,6 +296,17 @@ function SemesterPlanCourses() {
                         setScheduleMessage(
                             `${scheduleResponse.data.scheduled_count} saved exam(s) loaded.`
                         );
+                    }
+
+                    if (!cancelled && scheduleResponse.data.scheduled_count > 0) {
+                        const invigilationResponse =
+                            await API.get<InvigilationResponse>(
+                                `semester-plans/${selectedPlanId}/invigilation/`
+                            );
+
+                        if (!cancelled) {
+                            setInvigilationData(invigilationResponse.data);
+                        }
                     }
                 }
             } catch {
@@ -319,7 +438,26 @@ function SemesterPlanCourses() {
                                 : "Allocate All Rooms"}
                         </button>
 
-
+                        <button
+                            type="button"
+                            onClick={assignAllInvigilators}
+                            disabled={
+                                assigningAllInvigilators ||
+                                allocatingRooms ||
+                                generatingSchedule ||
+                                generatingExams ||
+                                !invigilationData ||
+                                !invigilationData.is_active ||
+                                invigilationData.scheduled_count === 0 ||
+                                invigilationData.schedules.some(
+                                    (schedule) => schedule.rooms.length === 0
+                                )
+                            }
+                        >
+                            {assigningAllInvigilators
+                                ? "Assigning Invigilators..."
+                                : "Assign All Invigilators"}
+                        </button>
 
                         {generationMessage && (
                             <p className="success-message">
@@ -474,7 +612,49 @@ function SemesterPlanCourses() {
                             </div>
                         )}
 
+                        {invigilationMessage && (
+                            <p className="success-message">
+                                {invigilationMessage}
+                            </p>
+                        )}
 
+                        {invigilationResult && (
+                            <div className="table-container">
+                                <h3>Invigilation Assignment Report</h3>
+
+                                <p>
+                                    Successful: {invigilationResult.summary.success_count} |
+                                    Skipped: {invigilationResult.summary.skipped_count} |
+                                    Failed: {invigilationResult.summary.failed_count}
+                                </p>
+
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Exam</th>
+                                            <th>Status</th>
+                                            <th>Assigned Invigilators</th>
+                                            <th>Message</th>
+                                        </tr>
+                                    </thead>
+
+                                    <tbody>
+                                        {invigilationResult.results.map((item) => (
+                                            <tr key={item.schedule_id}>
+                                                <td>{item.exam_code}</td>
+                                                <td>{item.status}</td>
+                                                <td>
+                                                    {item.assignments
+                                                        .map((staff) => staff.staff_name)
+                                                        .join(", ") || "None"}
+                                                </td>
+                                                <td>{item.message}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
 
                         {scheduleResult && (
                             <div className="table-container">

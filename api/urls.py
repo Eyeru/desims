@@ -40,5 +40,17 @@ urlpatterns = [
         "semester-plans/<int:plan_id>/allocate-rooms/",
         views.allocate_plan_rooms_view,
     ),
+    path(
+        "semester-plans/<int:plan_id>/invigilation/",
+        views.semester_plan_invigilation,
+    ),
+    path(
+        "exam-schedules/<int:schedule_id>/assign-invigilators/",
+        views.assign_exam_invigilators_view,
+    ),
+    path(
+        "semester-plans/<int:plan_id>/assign-invigilators/",
+        views.assign_plan_invigilators_view,
+    ),
 
 ]

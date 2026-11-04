@@ -123,8 +123,7 @@ def assign_invigilators(schedule):
 
     remaining = required - existing_count
 
-    assigned_staff_ids = existing.values_list("staff_id", flat=True)
-
+    assigned_staff_ids = [assignment.staff_id for assignment in existing]
     # Exclude staff assigned to another exam in the same date/session.
     busy_staff_ids = InvigilationAssignment.objects.filter(
         exam_schedule__date=schedule.date,

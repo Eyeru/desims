@@ -18,6 +18,11 @@ from allocations.services import (
     allocate_plan_rooms,
     RoomAllocationError,
 )
+from invigilation.services import (
+    assign_invigilators,
+    assign_all_invigilators,
+    required_invigilators,
+)
 
 
 @api_view(["GET"])
@@ -1103,3 +1108,161 @@ def update_staff(request, staff_id):
         serializer.errors,
         status=status.HTTP_400_BAD_REQUEST,
     )
+
+
+def invigilation_assignment_data(assignment):
+    return {
+        "id": assignment.id,
+        "staff_id": assignment.staff.id,
+        "staff_name": (
+            f"{assignment.staff.first_name} "
+            f"{assignment.staff.last_name}"
+        ),
+        "is_auto": assignment.is_auto,
+    }
+
+
+@api_view(["GET"])
+def semester_plan_invigilation(request, plan_id):
+    plan = get_object_or_404(SemesterPlan, id=plan_id)
+
+    schedules = (
+        ExamSchedule.objects.filter(plan=plan)
+        .select_related("exam__course", "session")
+        .prefetch_related(
+            "room_allocations__room",
+            "invigilationassignment_set__staff",
+        )
+        .order_by("date", "session__start_time")
+    )
+
+    schedule_data = []
+
+    for schedule in schedules:
+        allocations = schedule.room_allocations.all()
+
+        rooms = [
+            {
+                "id": allocation.room.id,
+                "name": allocation.room.name,
+                "building": allocation.room.building,
+                "room_type": allocation.room.room_type,
+                "allocated_students": allocation.allocated_students,
+            }
+            for allocation in allocations
+        ]
+
+        assignments = schedule.invigilationassignment_set.all()
+
+        assigned_invigilators = [
+            invigilation_assignment_data(assignment)
+            for assignment in assignments
+        ]
+
+        required = required_invigilators(schedule)
+        assigned = len(assigned_invigilators)
+
+        schedule_data.append({
+            "schedule_id": schedule.id,
+            "exam_code": schedule.exam.course.code,
+            "exam_title": schedule.exam.course.title,
+            "date": schedule.date,
+            "session": schedule.session.name,
+            "student_count": schedule.exam.total_students,
+            "rooms": rooms,
+            "required_invigilators": required,
+            "assigned_invigilators": assigned_invigilators,
+            "assigned_count": assigned,
+            "remaining_count": max(required - assigned, 0),
+        })
+
+    return Response({
+        "plan_id": plan.id,
+        "program_type": plan.program_type,
+        "is_active": plan.is_active,
+        "scheduled_count": len(schedule_data),
+        "schedules": schedule_data,
+    })
+
+
+@api_view(["POST"])
+def assign_exam_invigilators_view(request, schedule_id):
+    schedule = get_object_or_404(
+        ExamSchedule,
+        id=schedule_id,
+    )
+
+    result = assign_invigilators(schedule)
+
+    assignments = [
+        invigilation_assignment_data(assignment)
+        for assignment in result["assignments"]
+    ]
+
+    response_data = {
+        "status": result["status"],
+        "message": result["message"],
+        "assignments": assignments,
+    }
+
+    response_status = (
+        status.HTTP_200_OK
+        if result["status"] in ("success", "skipped")
+        else status.HTTP_400_BAD_REQUEST
+    )
+
+    return Response(response_data, status=response_status)
+
+
+@api_view(["POST"])
+def assign_plan_invigilators_view(request, plan_id):
+    plan = get_object_or_404(SemesterPlan, id=plan_id)
+
+    schedules = (
+        ExamSchedule.objects.filter(plan=plan)
+        .select_related("plan", "exam__course", "session")
+        .order_by("date", "session__start_time")
+    )
+
+    if not schedules.exists():
+        return Response(
+            {"error": "No scheduled exams found for this plan."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    results = assign_all_invigilators(schedules)
+
+    response_results = []
+
+    for result in results:
+        assignments = [
+            invigilation_assignment_data(assignment)
+            for assignment in result["assignments"]
+        ]
+
+        response_results.append({
+            "schedule_id": result["schedule"].id,
+            "exam_code": result["schedule"].exam.course.code,
+            "status": result["status"],
+            "message": result["message"],
+            "assignments": assignments,
+        })
+
+    summary = {
+        "success_count": sum(
+            item["status"] == "success" for item in response_results
+        ),
+        "skipped_count": sum(
+            item["status"] == "skipped" for item in response_results
+        ),
+        "failed_count": sum(
+            item["status"] == "failed" for item in response_results
+        ),
+    }
+
+    return Response({
+        "plan_id": plan.id,
+        "summary": summary,
+        "results": response_results,
+        "message": "Batch invigilation assignment completed.",
+    })
