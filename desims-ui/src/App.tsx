@@ -8,25 +8,35 @@ import Courses from "./pages/Courses";
 import Rooms from "./pages/Rooms";
 import Staff from "./pages/Staff";
 import ExamSchedules from "./pages/ExamSchedules";
+import Footer from "./components/Footer";
 import "./App.css";
 
 function App() {
-  return (
-        <Routes>
-            <Route path="*" element={<Navigate to="/" replace />} />
-            <Route path="/academic-years" element={
-                <AcademicYears />} />
-            <Route path="/semester-plans" element={
-                <SemesterPlans />} />
-            <Route path="/courses" element={<Courses />} />
-            <Route path="/rooms" element={<Rooms />} /> 
-            <Route path="/staff" element={<Staff />} />
-            <Route path="/exam-schedules" element={<ExamSchedules />} />
-            <Route path="/reports" element={
-                <PlaceholderPage title="Reports" />} />
-            <Route path="/semester-plan-courses" element={<SemesterPlanCourses />}/>
-            <Route path="/" element={<Dashboard />} />
-        </Routes>
+    return (
+        <div className="app-layout">
+            <div className="app-main">
+                <Routes>
+                    <Route path="*" element={<Navigate to="/" replace />} />
+                    <Route path="/academic-years" element={<AcademicYears />} />
+                    <Route path="/semester-plans" element={<SemesterPlans />} />
+                    <Route path="/courses" element={<Courses />} />
+                    <Route path="/rooms" element={<Rooms />} />
+                    <Route path="/staff" element={<Staff />} />
+                    <Route path="/exam-schedules" element={<ExamSchedules />} />
+                    <Route
+                        path="/reports"
+                        element={<PlaceholderPage title="Reports" />}
+                    />
+                    <Route
+                        path="/semester-plan-courses"
+                        element={<SemesterPlanCourses />}
+                    />
+                    <Route path="/" element={<Dashboard />} />
+                </Routes>
+            </div>
+
+            <Footer />
+        </div>
     );
 }
 

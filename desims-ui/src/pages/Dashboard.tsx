@@ -65,36 +65,34 @@ function Dashboard() {
                 </section>
 
                 <section className="dashboard-section">
-                    <h2>Examination Overview</h2>
+                <h2>Department Overview</h2>
 
-                    <div className="dashboard-summary-grid">
-                        <SummaryCard
-                            title="Courses"
-                            value={dashboard.statistics.courses}
-                        />
+                <div className="dashboard-summary-grid">
+                    <SummaryCard
+                        title="Courses"
+                        value={dashboard.statistics.courses}
+                        description="Courses in the department"
+                    />
 
-                        <SummaryCard
-                            title="Scheduled Exams"
-                            value={dashboard.statistics.schedules}
-                        />
-                    </div>
-                </section>
+                    <SummaryCard
+                        title="Scheduled Exams"
+                        value={dashboard.statistics.schedules}
+                        description="Exams with saved schedules"
+                    />
 
-                <section className="dashboard-section">
-                    <h2>Department Resources</h2>
+                    <SummaryCard
+                        title="Rooms"
+                        value={dashboard.statistics.rooms}
+                        description="Available examination rooms"
+                    />
 
-                    <div className="dashboard-summary-grid">
-                        <SummaryCard
-                            title="Rooms"
-                            value={dashboard.statistics.rooms}
-                        />
-
-                        <SummaryCard
-                            title="Academic Staff"
-                            value={dashboard.statistics.staff}
-                        />
-                    </div>
-                </section>
+                    <SummaryCard
+                        title="Academic Staff"
+                        value={dashboard.statistics.staff}
+                        description="Registered academic staff"
+                    />
+                </div>
+            </section>
             </main>
         </>
     );

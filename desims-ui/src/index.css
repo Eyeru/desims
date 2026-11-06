@@ -400,3 +400,79 @@ code {
         font-size: 12px;
     }
 }
+
+/* ================================
+   APPLICATION FOOTER
+================================ */
+
+.app-footer {
+    width: 100%;
+    margin-top: auto;
+    padding: 24px 32px 16px;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+}
+
+.footer-content {
+    max-width: 1400px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 24px;
+}
+
+.footer-content strong {
+    color: var(--forest-green);
+    font-size: 14px;
+}
+
+.footer-content p {
+    margin: 5px 0 0;
+    color: var(--text);
+    font-size: 13px;
+}
+
+.footer-university {
+    text-align: right;
+}
+
+.footer-bottom {
+    max-width: 1400px;
+    margin: 20px auto 0;
+    padding-top: 14px;
+    border-top: 1px solid var(--border);
+    color: var(--text);
+    font-size: 12px;
+    text-align: center;
+}
+
+@media (max-width: 600px) {
+    .app-footer {
+        padding: 20px 16px 14px;
+    }
+
+    .footer-content {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 16px;
+    }
+
+    .footer-university {
+        text-align: left;
+    }
+}
+
+/* ================================
+   APPLICATION LAYOUT
+================================ */
+
+.app-layout {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.app-main {
+    flex: 1;
+}
