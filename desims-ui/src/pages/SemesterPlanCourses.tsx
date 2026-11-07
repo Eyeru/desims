@@ -171,6 +171,8 @@ function SemesterPlanCourses() {
 
             setAllocationResult(response.data.data);
             setAllocationMessage(response.data.message);
+            // Refresh room and invigilation data after allocation
+            await loadInvigilation();
         } catch (err: unknown) {
             if (
                 typeof err === "object" &&
@@ -475,140 +477,111 @@ function SemesterPlanCourses() {
                                 {allocationMessage}
                             </p>
                         )}
-                        {allocationMessage && (
+                        
+                        {invigilationMessage && (
                             <p className="success-message">
-                                {allocationMessage}
+                                {invigilationMessage}
                             </p>
                         )}
 
-                        {allocationResult && (
+                        <p>
+                            {result.course_count > 0
+                                ? "Review the examination preparation progress for each course below."
+                                : "No matching courses found. Add or correct the course records before proceeding."}
+                        </p>
+
+                        {result.courses.length === 0 ? (
+                            <p>
+                                No courses match this plan yet. Check the course
+                                records for the correct year, semester, and program.
+                            </p>
+                        ) : (
                             <div className="table-container">
-                                <h3>Room Allocation Report</h3>
+                                <h3>Course Preparation Progress</h3>
 
-                                {/* Allocation Summary */}
-                                <div>
-                                    <h4>Summary</h4>
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Course</th>
+                                            <th>Exam Schedule</th>
+                                            <th>Room Allocation</th>
+                                            <th>Invigilation</th>
+                                        </tr>
+                                    </thead>
 
-                                    <p>Total Exams: {allocationResult.summary.total}</p>
+                                    <tbody>
+                                        {result.courses.map((course) => {
+                                            const schedule = scheduleResult?.schedules?.find(
+                                                (item: any) => item.exam_code === course.code
+                                            );
 
-                                    <p>
-                                        Successfully Allocated:{" "}
-                                        {allocationResult.summary.successful}
-                                    </p>
+                                            const invigilation = invigilationData?.schedules?.find(
+                                                (item) => item.exam_code === course.code
+                                            );
 
-                                    <p>
-                                        Skipped: {allocationResult.summary.skipped}
-                                    </p>
+                                            return (
+                                                <tr key={course.id}>
+                                                    <td>
+                                                        <strong>{course.code}</strong>
+                                                        <br />
+                                                        {course.title}
+                                                    </td>
 
-                                    <p>
-                                        Failed: {allocationResult.summary.failed}
-                                    </p>
-                                </div>
-
-                                {/* Successful Allocations */}
-                                {allocationResult.successful.length > 0 && (
-                                    <div>
-                                        <h4>Successful Allocations</h4>
-
-                                        {allocationResult.successful.map((exam: any) => (
-                                            <div
-                                                key={exam.schedule_id}
-                                                className="table-container"
-                                            >
-                                                <h4>
-                                                    {exam.exam_code} — {exam.date} (
-                                                    {exam.session})
-                                                </h4>
-
-                                                <p>
-                                                    Students: {exam.data.total_students} |{" "}
-                                                    Rooms Used: {exam.data.rooms_used} |{" "}
-                                                    Allocation Type: {exam.data.allocation_type}
-                                                </p>
-
-                                                <table>
-                                                    <thead>
-                                                        <tr>
-                                                            <th>Room</th>
-                                                            <th>Room Type</th>
-                                                            <th>Exam Capacity</th>
-                                                            <th>Allocated Students</th>
-                                                        </tr>
-                                                    </thead>
-
-                                                    <tbody>
-                                                        {exam.data.allocations.map(
-                                                            (allocation: any) => (
-                                                                <tr key={allocation.room_id}>
-                                                                    <td>{allocation.room_name}</td>
-                                                                    <td>{allocation.room_type}</td>
-                                                                    <td>{allocation.exam_capacity}</td>
-                                                                    <td>
-                                                                        {allocation.allocated_students}
-                                                                    </td>
-                                                                </tr>
-                                                            )
+                                                    <td>
+                                                        {schedule ? (
+                                                            <>
+                                                                {schedule.date}
+                                                                <br />
+                                                                {schedule.session}
+                                                            </>
+                                                        ) : (
+                                                            "Not scheduled"
                                                         )}
-                                                    </tbody>
-                                                </table>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
+                                                    </td>
 
-                                {/* Skipped Exams */}
-                                {allocationResult.skipped.length > 0 && (
-                                    <div>
-                                        <h4>Skipped Exams</h4>
+                                                    <td>
+                                                        {!schedule
+                                                            ? "—"
+                                                            : !invigilation
+                                                            ? "Loading details..."
+                                                            : invigilation.rooms.length === 0
+                                                                ? "Not allocated"
+                                                                : invigilation.rooms.map(
+                                                                    (room) => (
+                                                                        <div key={room.id}>
+                                                                            <strong>{room.name}</strong>
+                                                                            <br />
+                                                                            {room.building} — {room.room_type}
+                                                                            <br />
+                                                                            Students: {room.allocated_students}
+                                                                        </div>
+                                                                    )
+                                                                )}
+                                                    </td>
 
-                                        <table>
-                                            <thead>
-                                                <tr>
-                                                    <th>Exam</th>
-                                                    <th>Reason</th>
+                                                    <td>
+                                                        {!schedule
+                                                            ? "—"
+                                                            : !invigilation
+                                                            ? "Loading details..."
+                                                            : (
+                                                                <>
+                                                                    <strong>
+                                                                        {invigilation.assigned_count}/
+                                                                        {invigilation.required_invigilators}
+                                                                    </strong>
+                                                                    <br />
+                                                                    {invigilation.assigned_invigilators
+                                                                        .map((staff) => staff.staff_name)
+                                                                        .join(", ") || "None assigned"}
+                                                                </>
+                                                            )}
+                                                    </td>
                                                 </tr>
-                                            </thead>
-
-                                            <tbody>
-                                                {allocationResult.skipped.map((exam: any) => (
-                                                    <tr key={exam.schedule_id}>
-                                                        <td>{exam.exam_code}</td>
-                                                        <td>{exam.reason}</td>
-                                                    </tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                )}
-
-                                {/* Failed Allocations */}
-                                {allocationResult.failed.length > 0 && (
-                                    <div>
-                                        <h4>Failed Allocations</h4>
-
-                                        <table>
-                                            <thead>
-                                                <tr>
-                                                    <th>Exam</th>
-                                                    <th>Date</th>
-                                                    <th>Session</th>
-                                                    <th>Reason</th>
-                                                </tr>
-                                            </thead>
-
-                                            <tbody>
-                                                {allocationResult.failed.map((exam: any) => (
-                                                    <tr key={exam.schedule_id}>
-                                                        <td>{exam.exam_code}</td>
-                                                        <td>{exam.date}</td>
-                                                        <td>{exam.session}</td>
-                                                        <td>{exam.reason}</td>
-                                                    </tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                )}
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
                             </div>
                         )}
 
@@ -618,114 +591,9 @@ function SemesterPlanCourses() {
                             </p>
                         )}
 
-                        {invigilationResult && (
-                            <div className="table-container">
-                                <h3>Invigilation Assignment Report</h3>
-
-                                <p>
-                                    Successful: {invigilationResult.summary.success_count} |
-                                    Skipped: {invigilationResult.summary.skipped_count} |
-                                    Failed: {invigilationResult.summary.failed_count}
-                                </p>
-
-                                <table>
-                                    <thead>
-                                        <tr>
-                                            <th>Exam</th>
-                                            <th>Status</th>
-                                            <th>Assigned Invigilators</th>
-                                            <th>Message</th>
-                                        </tr>
-                                    </thead>
-
-                                    <tbody>
-                                        {invigilationResult.results.map((item) => (
-                                            <tr key={item.schedule_id}>
-                                                <td>{item.exam_code}</td>
-                                                <td>{item.status}</td>
-                                                <td>
-                                                    {item.assignments
-                                                        .map((staff) => staff.staff_name)
-                                                        .join(", ") || "None"}
-                                                </td>
-                                                <td>{item.message}</td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        )}
-
-                        {scheduleResult && (
-                            <div className="table-container">
-                                <h3>Generated Examination Timetable</h3>
-
-                                <table>
-                                    <thead>
-                                        <tr>
-                                            <th>Course Code</th>
-                                            <th>Course Title</th>
-                                            <th>Exam Date</th>
-                                            <th>Session</th>
-                                        </tr>
-                                    </thead>
-
-                                    <tbody>
-                                        {scheduleResult.schedules.map(
-                                            (schedule: any, index: number) => (
-                                                <tr key={index}>
-                                                    <td>{schedule.exam_code}</td>
-                                                    <td>{schedule.exam_title}</td>
-                                                    <td>{schedule.date}</td>
-                                                    <td>{schedule.session}</td>
-                                                </tr>
-                                            )
-                                        )}
-                                    </tbody>
-                                </table>
-                            </div>
-                        )}
 
                     </div>
 
-                    <p>
-                        {result.course_count > 0
-                            ? "Courses loaded successfully. Review the list below before proceeding to exam scheduling."
-                            : "No matching courses found. Add or correct the course records before proceeding."}
-                    </p>
-
-                    {result.courses.length === 0 ? (
-                        <p>
-                            No courses match this plan yet. Check the course
-                            records for the correct year, semester, and program.
-                        </p>
-                    ) : (
-                        <div className="table-container">
-                            <table>
-                                <thead>
-                                    <tr>
-                                        <th>Course Code</th>
-                                        <th>Course Title</th>
-                                        <th>Year Level</th>
-                                        <th>Semester</th>
-                                        <th>Program</th>
-                                    </tr>
-                                </thead>
-
-                                <tbody>
-                                    {result.courses.map((course) => (
-                                        <tr key={course.id}>
-                                            <td>{course.code}</td>
-                                            <td>{course.title}</td>
-                                            <td>{course.year_level}</td>
-                                            <td>{course.semester}</td>
-                                            <td>{course.program_type}</td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                    )}
                 </>
             )}
         </div>
