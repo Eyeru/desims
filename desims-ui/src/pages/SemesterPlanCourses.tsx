@@ -74,6 +74,7 @@ function SemesterPlanCourses() {
     const [allocationMessage, setAllocationMessage] = useState("");
     const [invigilationData, setInvigilationData] =
     useState<InvigilationResponse | null>(null);
+    
 
     const [assigningAllInvigilators, setAssigningAllInvigilators] =
         useState(false);
@@ -88,6 +89,7 @@ function SemesterPlanCourses() {
         if (!selectedPlanId || !result || result.course_count === 0) {
             return;
         }
+
 
         try {
             setGeneratingExams(true);
@@ -496,7 +498,7 @@ function SemesterPlanCourses() {
                                 records for the correct year, semester, and program.
                             </p>
                         ) : (
-                            <div className="table-container">
+                            <div className="course-progress-table">
                                 <h3>Course Preparation Progress</h3>
 
                                 <table>
