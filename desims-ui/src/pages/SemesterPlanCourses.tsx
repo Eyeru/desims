@@ -24,6 +24,7 @@ type InvigilationSchedule = {
         building: string;
         room_type: string;
         allocated_students: number;
+        invigilators: InvigilationAssignment[];
     }[];
     required_invigilators: number;
     assigned_invigilators: InvigilationAssignment[];
@@ -550,12 +551,19 @@ function SemesterPlanCourses() {
                                                                 ? "Not allocated"
                                                                 : invigilation.rooms.map(
                                                                     (room) => (
-                                                                        <div key={room.id}>
+                                                                        <div key={room.id} className="room-invigilation-item">
                                                                             <strong>{room.name}</strong>
                                                                             <br />
                                                                             {room.building} — {room.room_type}
                                                                             <br />
                                                                             Students: {room.allocated_students}
+                                                                            <br />
+                                                                            <span>
+                                                                                Invigilator(s):{" "}
+                                                                                {room.invigilators
+                                                                                    .map((staff) => staff.staff_name)
+                                                                                    .join(", ") || "None assigned"}
+                                                                            </span>
                                                                         </div>
                                                                     )
                                                                 )}
@@ -570,12 +578,8 @@ function SemesterPlanCourses() {
                                                                 <>
                                                                     <strong>
                                                                         {invigilation.assigned_count}/
-                                                                        {invigilation.required_invigilators}
+                                                                        {invigilation.required_invigilators} assigned
                                                                     </strong>
-                                                                    <br />
-                                                                    {invigilation.assigned_invigilators
-                                                                        .map((staff) => staff.staff_name)
-                                                                        .join(", ") || "None assigned"}
                                                                 </>
                                                             )}
                                                     </td>

@@ -1131,6 +1131,7 @@ def semester_plan_invigilation(request, plan_id):
         .select_related("exam__course", "session")
         .prefetch_related(
             "room_allocations__room",
+            "room_allocations__invigilator_assignments__staff",
             "invigilationassignment_set__staff",
         )
         .order_by("date", "session__start_time")
@@ -1148,6 +1149,10 @@ def semester_plan_invigilation(request, plan_id):
                 "building": allocation.room.building,
                 "room_type": allocation.room.room_type,
                 "allocated_students": allocation.allocated_students,
+                "invigilators": [
+                    invigilation_assignment_data(assignment)
+                    for assignment in allocation.invigilator_assignments.all()
+                ],
             }
             for allocation in allocations
         ]
