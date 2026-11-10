@@ -793,6 +793,29 @@ def semester_plan_schedule(request, plan_id):
     })
 
 
+@api_view(["POST"])
+def finalize_semester_plan_schedule(request, plan_id):
+    plan = get_object_or_404(SemesterPlan, id=plan_id)
+
+    schedules = ExamSchedule.objects.filter(plan=plan)
+
+    if not schedules.exists():
+        return Response(
+            {"message": "There are no exam schedules to finalize."},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    if schedules.filter(is_final=False).exists():
+        schedules.update(is_final=True)
+
+    return Response({
+        "status": "success",
+        "message": "Examination timetable finalized successfully.",
+        "plan_id": plan.id,
+        "finalized_count": schedules.count(),
+    })
+
+
 def room_response_data(room):
     return {
         "id": room.id,

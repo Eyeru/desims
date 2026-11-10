@@ -29,6 +29,8 @@ function ExamSchedules() {
     const [loadingPlans, setLoadingPlans] = useState(true);
     const [loadingSchedules, setLoadingSchedules] = useState(false);
     const [error, setError] = useState("");
+    const [finalizing, setFinalizing] = useState(false);
+    const [successMessage, setSuccessMessage] = useState("");
 
     useEffect(() => {
         async function loadPlans() {
@@ -88,7 +90,39 @@ function ExamSchedules() {
     const selectedPlan = plans.find(
         (plan) => plan.id === selectedPlanId
     );
+    async function handleFinalizeSchedule() {
+        if (!selectedPlanId || !scheduleData) return;
 
+        const confirmed = window.confirm(
+            "Are you sure you want to finalize this examination timetable? " +
+            "Please make sure you have reviewed all scheduled exams."
+        );
+
+        if (!confirmed) return;
+
+        try {
+            setFinalizing(true);
+            setError("");
+            setSuccessMessage("");
+
+            await API.post(
+                `semester-plans/${selectedPlanId}/finalize-schedule/`
+            );
+
+            const response = await API.get<ScheduleResponse>(
+                `semester-plans/${selectedPlanId}/schedule/`
+            );
+
+            setScheduleData(response.data);
+            setSuccessMessage(
+                "Examination timetable finalized successfully."
+            );
+        } catch {
+            setError("Could not finalize the examination timetable.");
+        } finally {
+            setFinalizing(false);
+        }
+    }
     if (loadingPlans) {
         return <p>Loading semester plans...</p>;
     }
@@ -184,6 +218,30 @@ function ExamSchedules() {
                                         Scheduled Exams (
                                         {scheduleData.scheduled_count})
                                     </h2>
+                                    {successMessage && (
+                                        <p className="success-message">{successMessage}</p>
+                                    )}
+
+                                    <div className="form-actions">
+                                        <button
+                                            type="button"
+                                            onClick={handleFinalizeSchedule}
+                                            disabled={
+                                                finalizing ||
+                                                scheduleData.schedules.every(
+                                                    (schedule) => schedule.is_final
+                                                )
+                                            }
+                                        >
+                                            {finalizing
+                                                ? "Finalizing..."
+                                                : scheduleData.schedules.every(
+                                                    (schedule) => schedule.is_final
+                                                )
+                                                ? "Timetable Finalized"
+                                                : "Finalize Timetable"}
+                                        </button>
+                                    </div>
 
                                     <div className="table-container">
                                         <table>
