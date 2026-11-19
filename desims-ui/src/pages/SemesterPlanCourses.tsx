@@ -508,7 +508,7 @@ function SemesterPlanCourses() {
                                             <th>Course</th>
                                             <th>Exam Schedule</th>
                                             <th>Room Allocation</th>
-                                            <th>Invigilation</th>
+                                            <th>Invigilators</th>
                                         </tr>
                                     </thead>
 
@@ -548,27 +548,17 @@ function SemesterPlanCourses() {
                                                             : !invigilation
                                                             ? "Loading details..."
                                                             : invigilation.rooms.length === 0
-                                                                ? "Not allocated"
-                                                                : invigilation.rooms.map(
-                                                                    (room) => (
-                                                                        <div key={room.id} className="room-invigilation-item">
-                                                                            <strong>{room.name}</strong>
-                                                                            <br />
-                                                                            {room.building} — {room.room_type}
-                                                                            <br />
-                                                                            Students: {room.allocated_students}
-                                                                            <br />
-                                                                            <span>
-                                                                                Invigilator(s):{" "}
-                                                                                {room.invigilators
-                                                                                    .map((staff) => staff.staff_name)
-                                                                                    .join(", ") || "None assigned"}
-                                                                            </span>
-                                                                        </div>
-                                                                    )
-                                                                )}
+                                                            ? "Not allocated"
+                                                            : invigilation.rooms.map((room) => (
+                                                                <div key={room.id} className="room-invigilation-item">
+                                                                    <strong>{room.name}</strong>
+                                                                    <br />
+                                                                    {room.building} — {room.room_type}
+                                                                    <br />
+                                                                    Students: {room.allocated_students}
+                                                                </div>
+                                                            ))}
                                                     </td>
-
                                                     <td>
                                                         {!schedule
                                                             ? "—"
@@ -580,9 +570,22 @@ function SemesterPlanCourses() {
                                                                         {invigilation.assigned_count}/
                                                                         {invigilation.required_invigilators} assigned
                                                                     </strong>
+
+                                                                    {invigilation.rooms.map((room) => (
+                                                                        <div key={room.id} className="room-invigilation-item">
+                                                                            {room.invigilators.length === 0
+                                                                                ? "None assigned"
+                                                                                : room.invigilators.map((staff) => (
+                                                                                    <div key={staff.id}>
+                                                                                        {staff.staff_name}
+                                                                                    </div>
+                                                                                ))}
+                                                                        </div>
+                                                                    ))}
                                                                 </>
                                                             )}
                                                     </td>
+                                                    
                                                 </tr>
                                             );
                                         })}
