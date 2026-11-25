@@ -655,7 +655,17 @@ def generate_plan_schedule(request, plan_id):
 
     # Do not overwrite existing schedules.
     existing_schedules = ExamSchedule.objects.filter(plan=plan)
-
+    # Do not regenerate a finalized timetable.
+    if existing_schedules.filter(is_final=True).exists():
+        return Response(
+            {
+                "error": (
+                    "This timetable has been finalized. "
+                    "Reopen it before generating a new schedule."
+                )
+            },
+            status=status.HTTP_400_BAD_REQUEST,
+        )
     if existing_schedules.exists():
         return Response(
             {
