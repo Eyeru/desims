@@ -156,6 +156,46 @@ function SemesterPlanCourses() {
             }
         };
 
+    const generateExamSchedule = async () => {
+        if (!selectedPlanId || !result || result.course_count === 0) {
+            return;
+        }
+
+        try {
+            setGeneratingExams(true);
+            setGeneratingSchedule(false);
+            setError("");
+            setGenerationMessage("");
+            setScheduleMessage("");
+
+            // First, generate or retrieve existing exam records.
+            await API.post(
+                `semester-plans/${selectedPlanId}/generate-exams/`,
+                {}
+            );
+
+            setGeneratingExams(false);
+            setGeneratingSchedule(true);
+
+            // Then generate the examination timetable.
+            const response = await API.post(
+                `semester-plans/${selectedPlanId}/generate-schedule/`,
+                {}
+            );
+
+            setScheduleResult(response.data);
+            setScheduleMessage(response.data.message);
+
+        } catch (err: unknown) {
+            setError(
+                "Could not generate the exam schedule. Check the server response."
+            );
+        } finally {
+            setGeneratingExams(false);
+            setGeneratingSchedule(false);
+        }
+    };
+
     const allocateRooms = async () => {
         if (!selectedPlanId || !scheduleResult) {
             return;
@@ -401,30 +441,21 @@ function SemesterPlanCourses() {
                         {result.course_count}
                     </p>
                     <div className="form-container">
+                        
                         <button
                             type="button"
-                            onClick={generateExams}
+                            onClick={generateExamSchedule}
                             disabled={
                                 generatingExams ||
-                                loadingCourses ||
-                                result.course_count === 0
-                            }
-                        >
-                            {generatingExams ? "Generating Exams..." : "Generate Exams"}
-                        </button>
-                        <button
-                            type="button"
-                            onClick={generateSchedule}
-                            disabled={
                                 generatingSchedule ||
-                                generatingExams ||
                                 loadingCourses ||
+                                !selectedPlanId ||
                                 result.course_count === 0
                             }
                         >
-                            {generatingSchedule
-                                ? "Generating Schedule..."
-                                : "Generate Schedule"}
+                            {generatingExams || generatingSchedule
+                                ? "Generating Exam Schedule..."
+                                : "Generate Exam Schedule"}
                         </button>
 
                         <button

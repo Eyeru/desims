@@ -577,6 +577,20 @@ def generate_plan_exams(request, plan_id):
         id=plan_id,
     )
 
+    if ExamSchedule.objects.filter(
+        plan=plan,
+        is_final=True
+    ).exists():
+        return Response(
+            {
+                "error": (
+                    "This timetable has been finalized. "
+                    "Reopen it before modifying exam records."
+                )
+            },
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
     courses = Course.objects.filter(
         year_level=plan.year_level,
         semester=plan.semester,
